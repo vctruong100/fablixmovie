@@ -38,6 +38,7 @@ public class SingleStarServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
 
         // Response mime type
+        response.setCharacterEncoding("UTF-8");
         response.setContentType("application/json");
 
         // Retrieve parameter id from url request.

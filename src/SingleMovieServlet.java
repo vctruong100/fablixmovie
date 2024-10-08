@@ -36,6 +36,7 @@ public class SingleMovieServlet extends HttpServlet {
      */
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
 
+        response.setCharacterEncoding("UTF-8");
         response.setContentType("application/json"); // Response mime type
 
         // Retrieve parameter id from url request.

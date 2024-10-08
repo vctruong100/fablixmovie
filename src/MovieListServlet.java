@@ -36,6 +36,7 @@ public class MovieListServlet extends HttpServlet {
      */
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
 
+        response.setCharacterEncoding("UTF-8");
         response.setContentType("application/json"); // Response mime type
 
         // The log message can be found in localhost log
