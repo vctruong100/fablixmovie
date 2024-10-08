@@ -38,11 +38,8 @@ public class MovieListServlet extends HttpServlet {
 
         response.setContentType("application/json"); // Response mime type
 
-        // Retrieve parameter id from url request.
-        String id = request.getParameter("id");
-
         // The log message can be found in localhost log
-        request.getServletContext().log("getting id: " + id);
+        request.getServletContext().log("getting top 20 movies by rating");
 
         // Output stream to STDOUT
         PrintWriter out = response.getWriter();
@@ -51,50 +48,101 @@ public class MovieListServlet extends HttpServlet {
         try (Connection conn = dataSource.getConnection()) {
             // Get a connection from dataSource
 
-            // Construct a query with parameter represented by "?"
-            String query = "SELECT * from stars as s, stars_in_movies as sim, movies as m " +
-                    "where m.id = sim.movieId and sim.starId = s.id and s.id = ?";
+            // JSON array for the top 20 movies
+            // Each movie contains 8 fields: movie_id, movie_title, movie_year, movie_director, movie_rating,
+            // movie_num_votes, movie_genres (first 3 genres), movie_stars (first 3 stars)
+            JsonArray topMoviesJson = new JsonArray();
+
+            // Query that grabs the top 20 movies by rating
+            String topMoviesQuery = "SELECT * from movies as m, ratings as r " +
+                    "where m.id = r.movieId " +
+                    "order by r.rating desc limit 20";
 
             // Declare our statement
-            PreparedStatement statement = conn.prepareStatement(query);
+            PreparedStatement topMoviesStatement = conn.prepareStatement(topMoviesQuery);
 
-            // Set the parameter represented by "?" in the query to the id we get from url,
-            // num 1 indicates the first "?" in the query
-            statement.setString(1, id);
-
-            // Perform the query
-            ResultSet rs = statement.executeQuery();
-
-            JsonArray jsonArray = new JsonArray();
+            // Perform the top movies query
+            ResultSet topMoviesRs = topMoviesStatement.executeQuery();
 
             // Iterate through each row of rs
-            while (rs.next()) {
+            while (topMoviesRs.next()) {
+                // Create a JsonArray for the first 3 genres / stars
+                JsonArray movieGenresJson = new JsonArray();
+                JsonArray movieStarsJson = new JsonArray();
 
                 // Retrieve movie details
-                String movieId = rs.getString("id");
-                String title = rs.getString("title");
-                String year = rs.getString("year");
-                String director = rs.getString("director");
-                String rating = rs.getString("rating");
-                String genres = rs.getString("genres");
-                String stars = rs.getString("stars");
-                String starIds = rs.getString("star_ids");
+                String movieId = topMoviesRs.getString("movieId");
+                String movieTitle = topMoviesRs.getString("title");
+                String movieYear = topMoviesRs.getString("year");
+                String movieDirector = topMoviesRs.getString("director");
+                String movieRating = topMoviesRs.getString("rating");
+                String movieNumVotes = topMoviesRs.getString("numVotes");
+
+                // Create queries to get first 3 genres and stars for each movie
+                // Prepare statements, then perform the queries
+                String genresQuery = "SELECT * from genres_in_movies as gim, genres as g " +
+                        "where gim.movieId = ? and gim.genreId = g.id " +
+                        "limit 3";
+
+                String starsQuery = "SELECT * from stars_in_movies as sim, stars as s " +
+                        "where sim.movieId = ? and sim.starId = s.id " +
+                        "limit 3";
+
+                PreparedStatement genresStatement = conn.prepareStatement(genresQuery);
+                PreparedStatement starsStatement = conn.prepareStatement(starsQuery);
+                genresStatement.setString(1, movieId);
+                starsStatement.setString(1, movieId);
+
+                ResultSet genresRs = genresStatement.executeQuery();
+                while (genresRs.next()) {
+                    // Prepare genre info (genre_id, genre_name)
+                    String genreId = genresRs.getString("genreId");
+                    String genreName = genresRs.getString("name");
+
+                    JsonObject genreJson = new JsonObject();
+                    genreJson.addProperty("genre_id", genreId);
+                    genreJson.addProperty("genre_name", genreName);
+
+                    movieGenresJson.add(genreJson);
+                }
+                genresRs.close();
+                genresStatement.close();
+
+                ResultSet starsRs = starsStatement.executeQuery();
+                while (starsRs.next()) {
+                    // Prepare star info (star_id, star_name, star_birth_year)
+                    String starId = starsRs.getString("starId");
+                    String starName = starsRs.getString("name");
+                    String starBirthYear = starsRs.getString("birthYear");
+
+                    JsonObject starJson = new JsonObject();
+                    starJson.addProperty("star_id", starId);
+                    starJson.addProperty("star_name", starName);
+                    starJson.addProperty("star_birth_year", starBirthYear);
+
+                    movieStarsJson.add(starJson);
+                }
+                starsRs.close();
+                starsStatement.close();
 
                 // Create a JsonObject for the movie
-                JsonObject jsonObject = new JsonObject();
-                jsonObject.addProperty("movie_id", movieId);
-                jsonObject.addProperty("title", title);
-                jsonObject.addProperty("year", year);
-                jsonObject.addProperty("director", director);
-                jsonObject.addProperty("rating", rating);
+                JsonObject movieJson = new JsonObject();
+                movieJson.addProperty("movie_id", movieId);
+                movieJson.addProperty("movie_title", movieTitle);
+                movieJson.addProperty("movie_year", movieYear);
+                movieJson.addProperty("movie_director", movieDirector);
+                movieJson.addProperty("movie_rating", movieRating);
+                movieJson.addProperty("movie_num_votes", movieNumVotes);
+                movieJson.add("movie_genres", movieGenresJson);
+                movieJson.add("movie_stars", movieStarsJson);
 
-                jsonArray.add(jsonObject);
+                topMoviesJson.add(movieJson);
             }
-            rs.close();
-            statement.close();
+            topMoviesRs.close();
+            topMoviesStatement.close();
 
             // Write JSON string to output
-            out.write(jsonArray.toString());
+            out.write(topMoviesJson.toString());
             // Set response status to 200 (OK)
             response.setStatus(200);
 
