@@ -2,11 +2,28 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Movie List</title>
-    <script src="index.js" defer></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Movie Details</title>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="single-movie.js" defer></script>
 </head>
 <body>
-<h1>Top 20 Rated Movies</h1>
-<div id="movie-list"></div>
+<h1>Movie Details</h1>
+
+<div id="movie-details">
+    <p><strong>Title:</strong> <span id="movie-title"></span></p>
+    <p><strong>Year:</strong> <span id="movie-year"></span></p>
+    <p><strong>Director:</strong> <span id="movie-director"></span></p>
+    <p><strong>Rating:</strong> <span id="movie-rating"></span></p>
+    <p><strong>Votes:</strong> <span id="movie-votes"></span></p>
+    <h2>Genres</h2>
+    <ul id="movie-genres"></ul>
+    <h2>Stars</h2>
+    <ul id="movie-stars"></ul>
+</div>
+
+<a href="index.html">Back to Movie List</a>
 </body>
 </html>

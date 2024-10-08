@@ -59,7 +59,7 @@ public class SingleMovieServlet extends HttpServlet {
             JsonArray movieStarsJson = new JsonArray();
 
             // Query that grabs info about the movie including its rating
-            String singleMovieQuery = "SELECT * from movies as m, ratings as r" +
+            String singleMovieQuery = "SELECT * from movies as m, ratings as r " +
                     "where m.id = ? and r.movieId = m.id";
 
             // Query that grabs genres associated with the movie
@@ -71,9 +71,14 @@ public class SingleMovieServlet extends HttpServlet {
                     "where sim.movieId = ? and sim.starId = s.id";
 
             // Declare statements
-            PreparedStatement singleMovieStatement = conn.prepareStatement(singleMovieQuery);
-            PreparedStatement movieGenresStatement = conn.prepareStatement(movieGenresQuery);
-            PreparedStatement movieStarsStatement = conn.prepareStatement(movieStarsQuery);
+            PreparedStatement singleMovieStatement = conn.prepareStatement(
+                    singleMovieQuery, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+
+            PreparedStatement movieGenresStatement = conn.prepareStatement(
+                    movieGenresQuery, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+
+            PreparedStatement movieStarsStatement = conn.prepareStatement(
+                    movieStarsQuery, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
 
             // Set the parameter represented by "?" in the query to the id we get from url,
             // num 1 indicates the first "?" in the query
