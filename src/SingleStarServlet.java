@@ -65,17 +65,17 @@ public class SingleStarServlet extends HttpServlet {
                     "where s.id = ?";
 
             // Query to grab movies associated with a particular star
-            String moviesQuery = "SELECT * from stars_in_movies as sim, movies as m " +
+            String starMoviesQuery = "SELECT * from stars_in_movies as sim, movies as m " +
                     "where sim.starId = ? and sim.movieId = m.id";
 
             // Declare statements
             PreparedStatement singleStarStatement = conn.prepareStatement(singleStarQuery);
-            PreparedStatement moviesStatement = conn.prepareStatement(moviesQuery);
+            PreparedStatement starMoviesStatement = conn.prepareStatement(starMoviesQuery);
 
             // Set the parameter represented by "?" in the query to the id we get from url,
             // num 1 indicates the first "?" in the query
             singleStarStatement.setString(1, id);
-            moviesStatement.setString(1, id);
+            starMoviesStatement.setString(1, id);
 
             // Perform the single star query
             ResultSet singleStarRs = singleStarStatement.executeQuery();
@@ -92,14 +92,14 @@ public class SingleStarServlet extends HttpServlet {
             singleStarStatement.close();
 
             // Perform the movies query
-            ResultSet moviesRs = moviesStatement.executeQuery();
+            ResultSet starMoviesRs = starMoviesStatement.executeQuery();
 
-            // Iterate through each row of moviesRs
-            while (moviesRs.next()) {
-                String movieId = moviesRs.getString("movieId");
-                String movieTitle = moviesRs.getString("title");
-                String movieYear = moviesRs.getString("year");
-                String movieDirector = moviesRs.getString("director");
+            // Iterate through each row of starMoviesRs
+            while (starMoviesRs.next()) {
+                String movieId = starMoviesRs.getString("movieId");
+                String movieTitle = starMoviesRs.getString("title");
+                String movieYear = starMoviesRs.getString("year");
+                String movieDirector = starMoviesRs.getString("director");
 
                 // Create a JsonObject based on the data we retrieve from moviesRs
                 // Contains 4 fields: movie_id, movie_title, movie_year, movie_director
@@ -112,9 +112,9 @@ public class SingleStarServlet extends HttpServlet {
                 // Add to movies array
                 starMoviesJson.add(jsonObject);
             }
-            starJson.add("movies", starMoviesJson);
-            moviesRs.close();
-            moviesStatement.close();
+            starJson.add("star_movies", starMoviesJson);
+            starMoviesRs.close();
+            starMoviesStatement.close();
 
             // Write JSON string to output
             out.write(starJson.toString());
