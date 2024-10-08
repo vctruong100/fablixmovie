@@ -24,7 +24,7 @@ public class MovieListServlet extends HttpServlet {
 
     public void init(ServletConfig config) {
         try {
-            dataSource = (DataSource) new InitialContext().lookup("java:comp/env/jdbc/moviedbexample");
+            dataSource = (DataSource) new InitialContext().lookup("java:comp/env/jdbc/moviedb");
         } catch (NamingException e) {
             e.printStackTrace();
         }
@@ -119,6 +119,7 @@ public class MovieListServlet extends HttpServlet {
                     starJson.addProperty("star_id", starId);
                     starJson.addProperty("star_name", starName);
                     starJson.addProperty("star_birth_year", starBirthYear);
+                    starJson.addProperty("star_url", "/api/single-star?id=" + starId);
 
                     movieStarsJson.add(starJson);
                 }
@@ -133,6 +134,7 @@ public class MovieListServlet extends HttpServlet {
                 movieJson.addProperty("movie_director", movieDirector);
                 movieJson.addProperty("movie_rating", movieRating);
                 movieJson.addProperty("movie_num_votes", movieNumVotes);
+                movieJson.addProperty("movie_url", "/api/single-movie?id=" + movieId);
                 movieJson.add("movie_genres", movieGenresJson);
                 movieJson.add("movie_stars", movieStarsJson);
 
