@@ -69,8 +69,10 @@ public class SingleStarServlet extends HttpServlet {
                     "where sim.starId = ? and sim.movieId = m.id";
 
             // Declare statements
-            PreparedStatement singleStarStatement = conn.prepareStatement(singleStarQuery);
-            PreparedStatement starMoviesStatement = conn.prepareStatement(starMoviesQuery);
+            PreparedStatement singleStarStatement = conn.prepareStatement(
+                    singleStarQuery, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+            PreparedStatement starMoviesStatement = conn.prepareStatement(
+                    starMoviesQuery, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
 
             // Set the parameter represented by "?" in the query to the id we get from url,
             // num 1 indicates the first "?" in the query
