@@ -37,7 +37,8 @@ public class SingleStarServlet extends HttpServlet {
      */
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
 
-        response.setContentType("application/json"); // Response mime type
+        // Response mime type
+        response.setContentType("application/json");
 
         // Retrieve parameter id from url request.
         String id = request.getParameter("id");
@@ -52,52 +53,70 @@ public class SingleStarServlet extends HttpServlet {
         try (Connection conn = dataSource.getConnection()) {
             // Get a connection from dataSource
 
-            // Construct a query with parameter represented by "?"
-            String query = "SELECT * from stars as s, stars_in_movies as sim, movies as m " +
-                    "where m.id = sim.movieId and sim.starId = s.id and s.id = ?";
+            // Create a JSON object for each star
+            // Contains 4 fields: id, name, birthYear, and movies (an array of movies)
+            JsonObject starJson = new JsonObject();
+            JsonArray starMoviesJson = new JsonArray();
 
-            // Declare our statement
-            PreparedStatement statement = conn.prepareStatement(query);
+            // Construct queries parameterized with ?
+
+            // Query to grab movies associated with a particular star
+            String moviesQuery = "SELECT * from stars_in_movies as sim, movies as m " +
+                    "where sim.starId = ? and sim.movieId = m.id";
+
+            // Query to grab star info
+            String singleStarQuery = "SELECT * from stars as s " +
+                    "where s.id = ?";
+
+            // Declare statements
+            PreparedStatement moviesStatement = conn.prepareStatement(moviesQuery);
+            PreparedStatement singleStarStatement = conn.prepareStatement(singleStarQuery);
 
             // Set the parameter represented by "?" in the query to the id we get from url,
             // num 1 indicates the first "?" in the query
-            statement.setString(1, id);
+            moviesStatement.setString(1, id);
+            singleStarStatement.setString(1, id);
 
-            // Perform the query
-            ResultSet rs = statement.executeQuery();
+            // Perform the single star query
+            ResultSet singleStarRs = singleStarStatement.executeQuery();
+            if (singleStarRs.first()) {
+                String starId = singleStarRs.getString("id");
+                String starName = singleStarRs.getString("name");
+                String starBirthYear = singleStarRs.getString("birthYear");
 
-            JsonArray jsonArray = new JsonArray();
-
-            // Iterate through each row of rs
-            while (rs.next()) {
-
-                String starId = rs.getString("starId");
-                String starName = rs.getString("name");
-                String starDob = rs.getString("birthYear");
-
-                String movieId = rs.getString("movieId");
-                String movieTitle = rs.getString("title");
-                String movieYear = rs.getString("year");
-                String movieDirector = rs.getString("director");
-
-                // Create a JsonObject based on the data we retrieve from rs
-
-                JsonObject jsonObject = new JsonObject();
-                jsonObject.addProperty("star_id", starId);
-                jsonObject.addProperty("star_name", starName);
-                jsonObject.addProperty("star_dob", starDob);
-                jsonObject.addProperty("movie_id", movieId);
-                jsonObject.addProperty("movie_title", movieTitle);
-                jsonObject.addProperty("movie_year", movieYear);
-                jsonObject.addProperty("movie_director", movieDirector);
-
-                jsonArray.add(jsonObject);
+                starJson.addProperty("id", starId);
+                starJson.addProperty("name", starName);
+                starJson.addProperty("birthYear", starBirthYear);
             }
-            rs.close();
-            statement.close();
+            singleStarRs.close();
+            singleStarStatement.close();
+
+            // Perform the movies query
+            ResultSet moviesRs = moviesStatement.executeQuery();
+
+            // Iterate through each row of moviesRs
+            while (moviesRs.next()) {
+                String movieId = moviesRs.getString("movieId");
+                String movieTitle = moviesRs.getString("title");
+                String movieYear = moviesRs.getString("year");
+                String movieDirector = moviesRs.getString("director");
+
+                // Create a JsonObject based on the data we retrieve from moviesRs
+                JsonObject jsonObject = new JsonObject();
+                jsonObject.addProperty("id", movieId);
+                jsonObject.addProperty("title", movieTitle);
+                jsonObject.addProperty("year", movieYear);
+                jsonObject.addProperty("director", movieDirector);
+
+                // Add to movies array
+                starMoviesJson.add(jsonObject);
+            }
+            starJson.add("movies", starMoviesJson);
+            moviesRs.close();
+            moviesStatement.close();
 
             // Write JSON string to output
-            out.write(jsonArray.toString());
+            out.write(starJson.toString());
             // Set response status to 200 (OK)
             response.setStatus(200);
 
