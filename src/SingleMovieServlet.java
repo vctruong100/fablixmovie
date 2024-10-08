@@ -137,7 +137,6 @@ public class SingleMovieServlet extends HttpServlet {
                 jsonObject.addProperty("star_id", starId);
                 jsonObject.addProperty("star_name", starName);
                 jsonObject.addProperty("star_birth_year", starBirthYear);
-                jsonObject.addProperty("star_url", "/api/single-star?id=" + starId);
 
                 // Add to stars array
                 movieStarsJson.add(jsonObject);

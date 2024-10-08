@@ -86,7 +86,7 @@ public class SingleStarServlet extends HttpServlet {
 
                 starJson.addProperty("star_id", starId);
                 starJson.addProperty("star_name", starName);
-                starJson.addProperty("star_birth_year", starBirthYear != null ? starBirthYear : "N/A");
+                starJson.addProperty("star_birth_year", starBirthYear);
             }
             singleStarRs.close();
             singleStarStatement.close();
@@ -108,7 +108,6 @@ public class SingleStarServlet extends HttpServlet {
                 jsonObject.addProperty("movie_title", movieTitle);
                 jsonObject.addProperty("movie_year", movieYear);
                 jsonObject.addProperty("movie_director", movieDirector);
-                jsonObject.addProperty("movie_url", "/api/single-movie?id=" + movieId);
 
                 // Add to movies array
                 starMoviesJson.add(jsonObject);
