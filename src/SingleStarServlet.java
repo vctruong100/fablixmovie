@@ -54,28 +54,28 @@ public class SingleStarServlet extends HttpServlet {
             // Get a connection from dataSource
 
             // Create a JSON object for each star
-            // Contains 4 fields: id, name, birthYear, and movies (an array of movies)
+            // Contains 4 fields: star_id, star_name, star_birth_year, and star_movies (an array of movies)
             JsonObject starJson = new JsonObject();
             JsonArray starMoviesJson = new JsonArray();
 
             // Construct queries parameterized with ?
 
-            // Query to grab movies associated with a particular star
-            String moviesQuery = "SELECT * from stars_in_movies as sim, movies as m " +
-                    "where sim.starId = ? and sim.movieId = m.id";
-
             // Query to grab star info
             String singleStarQuery = "SELECT * from stars as s " +
                     "where s.id = ?";
 
+            // Query to grab movies associated with a particular star
+            String moviesQuery = "SELECT * from stars_in_movies as sim, movies as m " +
+                    "where sim.starId = ? and sim.movieId = m.id";
+
             // Declare statements
-            PreparedStatement moviesStatement = conn.prepareStatement(moviesQuery);
             PreparedStatement singleStarStatement = conn.prepareStatement(singleStarQuery);
+            PreparedStatement moviesStatement = conn.prepareStatement(moviesQuery);
 
             // Set the parameter represented by "?" in the query to the id we get from url,
             // num 1 indicates the first "?" in the query
-            moviesStatement.setString(1, id);
             singleStarStatement.setString(1, id);
+            moviesStatement.setString(1, id);
 
             // Perform the single star query
             ResultSet singleStarRs = singleStarStatement.executeQuery();
@@ -84,9 +84,9 @@ public class SingleStarServlet extends HttpServlet {
                 String starName = singleStarRs.getString("name");
                 String starBirthYear = singleStarRs.getString("birthYear");
 
-                starJson.addProperty("id", starId);
-                starJson.addProperty("name", starName);
-                starJson.addProperty("birthYear", starBirthYear);
+                starJson.addProperty("star_id", starId);
+                starJson.addProperty("star_name", starName);
+                starJson.addProperty("star_birth_year", starBirthYear);
             }
             singleStarRs.close();
             singleStarStatement.close();
@@ -102,11 +102,12 @@ public class SingleStarServlet extends HttpServlet {
                 String movieDirector = moviesRs.getString("director");
 
                 // Create a JsonObject based on the data we retrieve from moviesRs
+                // Contains 4 fields: movie_id, movie_title, movie_year, movie_director
                 JsonObject jsonObject = new JsonObject();
-                jsonObject.addProperty("id", movieId);
-                jsonObject.addProperty("title", movieTitle);
-                jsonObject.addProperty("year", movieYear);
-                jsonObject.addProperty("director", movieDirector);
+                jsonObject.addProperty("movie_id", movieId);
+                jsonObject.addProperty("movie_title", movieTitle);
+                jsonObject.addProperty("movie_year", movieYear);
+                jsonObject.addProperty("movie_director", movieDirector);
 
                 // Add to movies array
                 starMoviesJson.add(jsonObject);
