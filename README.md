@@ -1,14 +1,13 @@
-# fab-project
-Test
-
 ## Demo
-https://www.example.com
+https://www.youtube.com/watch?v=gUnYy8DNaRM
 
 ## Contributions
 ### Vinh
-- stub
+- Implemented JS and HTML for Movie List (index), Single Star, and Single Movie
+- Implemented and integrated styles.css
 ### Jason
-- stub
+- Did create_table.sql and set up other SQL scripts
+- Implemented SingleStarServlet, SingleMovieServlet, MovieListServlet
 
 ## Requirements
 - Java 11.0.24
@@ -23,5 +22,3 @@ CREATE USER 'mytestuser'@'localhost' IDENTIFIED BY 'My6$Password';
 GRANT ALL PRIVILEGES ON *.* TO 'mytestuser'@'localhost';
 ```
 
-## Running
-- stub
