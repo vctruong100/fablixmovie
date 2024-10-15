@@ -4,7 +4,7 @@
          version="3.1">
     <display-name>fab-project</display-name>
     <welcome-file-list>
-        <welcome-file>index.html</welcome-file>
+        <welcome-file>movielist.html</welcome-file>
     </welcome-file-list>
 
     <!-- Register DataSource in META-INF/context.xml-->
