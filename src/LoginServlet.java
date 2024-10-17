@@ -57,7 +57,7 @@ public class LoginServlet extends HttpServlet {
                     // Login fail: incorrect password
                     responseJsonObject.addProperty("status", "fail");
                     // Log to localhost log
-                    request.getServletContext().log("Login failed (incorrect username)");
+                    request.getServletContext().log("Login failed (incorrect password)");
 
                     // give user an error message
                     responseJsonObject.addProperty("message", "Incorrect password");
