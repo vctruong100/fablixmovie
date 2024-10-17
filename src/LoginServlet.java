@@ -52,6 +52,7 @@ public class LoginServlet extends HttpServlet {
                     // Set this user into the session
                     request.getSession().setAttribute("user", new User(username));
                     responseJsonObject.addProperty("status", "success");
+                    responseJsonObject.addProperty("message", "success");
                 } else {
                     // Login fail: incorrect password
                     responseJsonObject.addProperty("status", "fail");
