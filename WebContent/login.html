@@ -1,34 +1,32 @@
-<!-- This page will be redirected from any url if you are not logged in -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login to Fablix</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-<h2>Login to Fablix</h2>
-<!-- Set the method to POST to avoid showing the username/password in the URL
-     The default action is disabled to allow your own implementation. -->
-<form id="login_form" method="post" action="#">
-    <label><b>Username</b></label>
-    <label>
-        <input name="username" placeholder="Enter Username" type="text">
-    </label>
-    <br>
-    <label><b>Password</b></label>
-    <label>
-        <input name="password" placeholder="Enter Password" type="password">
-    </label>
-    <br>
-    <input type="submit" value="Login">
-</form>
+<div class="login-container">
+    <div class="login-box">
+        <h2>Sign in to Fablix</h2>
+        <form id="login_form" method="post" action="#">
+            <div class="input-box">
+                <label for="username">Email</label>
+                <input name="username" id="username" placeholder="Enter email" type="text" required>
+            </div>
+            <div class="input-box">
+                <label for="password">Password</label>
+                <input name="password" id="password" placeholder="Enter Password" type="password" required>
+            </div>
+            <input type="submit" value="Sign In" class="login-btn">
+        </form>
 
-<div id="login_error_message"></div>
+        <div id="login_error_message"></div>
+    </div>
+</div>
 
-<!-- include jQuery-->
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
-<!-- include our own JS file -->
 <script src="./login.js"></script>
-
 </body>
 </html>
