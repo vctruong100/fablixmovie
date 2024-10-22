@@ -17,11 +17,9 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 
 import query.MovieListQuery;
-import query.MovieStarsQuery;
-import query.MovieGenresQuery;
+import resproc.MovieListResultProc;
 
 @WebServlet(name = "SearchServlet", urlPatterns = "/api/search")
 public class SearchServlet extends HttpServlet {
@@ -61,99 +59,28 @@ public class SearchServlet extends HttpServlet {
         try (Connection conn = dataSource.getConnection()) {
             JsonArray resultArray = new JsonArray();
 
-            int limit = (limitString == null || limitString.isEmpty()) ? 10 : Integer.parseInt(limitString);
+            int limit = Integer.parseInt(limitString);
             if (limit < 1 || limit > 100) {
                 throw new NumberOutOfRange("limit must be between 1 and 100");
             }
-            int page = (pageString == null || pageString.isEmpty()) ? 1 : Integer.parseInt(pageString);
+            int page = Integer.parseInt(pageString);
+            if (page < 1) {
+                throw new NumberOutOfRange("page must be greater than 0");
+            }
             int offset = limit * (page - 1);
 
             MovieListQuery mlQuery = new MovieListQuery(conn);
-            // Check for empty/null parameters and set only if not null or empty
-            if (title != null && !title.trim().isEmpty()) {
-                mlQuery.setTitle(title);
-            }
-            if (year != null && !year.trim().isEmpty()) {
-                mlQuery.setYear(year);
-            }
-            if (director != null && !director.trim().isEmpty()) {
-                mlQuery.setDirector(director);
-            }
-            if (star != null && !star.trim().isEmpty()) {
-                mlQuery.setStar(star);
-            }
+            MovieListResultProc mlrp = new MovieListResultProc(resultArray);
+
+            mlQuery.setTitle(title);
+            mlQuery.setYear(year);
+            mlQuery.setDirector(director);
+            mlQuery.setStar(star);
             mlQuery.setLimit(limit);
             mlQuery.setOffset(offset);
 
             PreparedStatement mlStatement = mlQuery.prepareStatement();
-            ResultSet mlRs = mlStatement.executeQuery();
-            while (mlRs.next()) {
-                JsonObject movieObj = new JsonObject();
-                JsonArray movieGenres = new JsonArray();
-                JsonArray movieStars = new JsonArray();
-
-                String movieId = mlRs.getString("movieId");
-                String movieTitle = mlRs.getString("title");
-                String movieYear = mlRs.getString("year");
-                String movieDirector = mlRs.getString("director");
-                String movieRating = mlRs.getString("rating");
-                String movieNumVotes = mlRs.getString("numVotes");
-
-                /* get genres associated with movie (limit 3) */
-                MovieGenresQuery mgQuery = new MovieGenresQuery(conn, movieId);
-                mgQuery.setLimit(3);
-
-                PreparedStatement mgStatement = mgQuery.prepareStatement();
-                ResultSet mgRs = mgStatement.executeQuery();
-                while (mgRs.next()) {
-                    JsonObject genreObj = new JsonObject();
-                    String genreId = mgRs.getString("genreId");
-                    String genreName = mgRs.getString("name");
-
-                    genreObj.addProperty("genreId", genreId);
-                    genreObj.addProperty("genreName", genreName);
-
-                    movieGenres.add(genreObj);
-                }
-                mgRs.close();
-                mgStatement.close();
-
-                /* get stars associated with movies */
-                MovieStarsQuery msQuery = new MovieStarsQuery(conn, movieId);
-                msQuery.setLimit(3);
-
-                PreparedStatement msStatement = msQuery.prepareStatement();
-                ResultSet msRs = msStatement.executeQuery();
-                while (msRs.next()) {
-                    JsonObject starObj = new JsonObject();
-                    String starId = msRs.getString("starId");
-                    String starName = msRs.getString("name");
-                    String starBirthYear = msRs.getString("birthYear");
-                    String starMovieCount = msRs.getString("movieCount");
-
-                    starObj.addProperty("star_id", starId);
-                    starObj.addProperty("star_name", starName);
-                    starObj.addProperty("star_birth_year", starBirthYear);
-                    starObj.addProperty("star_movie_count", starMovieCount);
-
-                    movieStars.add(starObj);
-                }
-                msRs.close();
-                msStatement.close();
-
-                /* build movie and add to result array */
-                movieObj.addProperty("movie_id", movieId);
-                movieObj.addProperty("movie_title", movieTitle);
-                movieObj.addProperty("movie_year", movieYear);
-                movieObj.addProperty("movie_director", movieDirector);
-                movieObj.addProperty("movie_rating", movieRating);
-                movieObj.addProperty("movie_num_votes", movieNumVotes);
-                movieObj.add("movie_genres", movieGenres);
-                movieObj.add("movie_stars", movieStars);
-
-                resultArray.add(movieObj);
-            }
-            mlRs.close();
+            mlrp.processResultSet(mlStatement.executeQuery());
             mlStatement.close();
 
             // Write JSON string to output
@@ -162,9 +89,10 @@ public class SearchServlet extends HttpServlet {
             response.setStatus(200);
 
         } catch (Exception e) {
-            // Write detailed error message JSON object to output
+            // Write user error message JSON object to output
             JsonObject jsonObject = new JsonObject();
             jsonObject.addProperty("errorMessage", e.getMessage());
+            out.write(jsonObject.toString());
 
             // Capture and log the stack trace to help identify where the error occurred
             StringWriter sw = new StringWriter();
@@ -172,12 +100,10 @@ public class SearchServlet extends HttpServlet {
             e.printStackTrace(pw);
             String stackTrace = sw.toString();
 
-            jsonObject.addProperty("stackTrace", stackTrace); // Include stack trace in the response
-            out.write(jsonObject.toString());
-
             // Log error to localhost log with full details
             request.getServletContext().log("Error: " + e.getMessage());
             request.getServletContext().log(stackTrace);  // Log stack trace in server logs
+            System.out.println(stackTrace);
 
             // Set response status to 500 (Internal Server Error)
             response.setStatus(500);

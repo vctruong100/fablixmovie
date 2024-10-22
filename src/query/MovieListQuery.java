@@ -134,20 +134,25 @@ public class MovieListQuery extends BaseQuery {
         return statement;
     }
 
+    /*
+     * "title", "director", "year", and "star" are user defined queries, so
+     * these fields shall be trimmed in case the user includes
+     * leading/trailing whitespace (or just spaces)
+     */
     public void setTitle(String title) {
-        this.title = title;
+        this.title = title != null ? title.trim() : null;
     }
 
     public void setDirector(String director) {
-        this.director = director;
+        this.director = director != null ? director.trim() : null;
     }
 
     public void setYear(String year) {
-        this.year = year;
+        this.year = year != null ? year.trim() : null;
     }
 
     public void setStar(String star) {
-        this.star = star;
+        this.star = star != null ? star.trim() : null;
     }
 
     public void setLimit(int limit) {
