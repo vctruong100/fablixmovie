@@ -10,9 +10,8 @@ import java.sql.PreparedStatement;
  * on its fields and orders rows by either its title/rating or its rating/title
  */
 public class MovieListQuery extends BaseQuery {
-    public static class OrderMode {
-        public static int ASC = 0;
-        public static int DESC = 1;
+    public enum OrderMode {
+        ASC, DESC
     }
 
     private final StringBuilder builder;
@@ -53,7 +52,7 @@ public class MovieListQuery extends BaseQuery {
         limit = 10;
         offset = 0;
         order = new String[2];
-        orderByTitleRating(OrderMode.ASC, OrderMode.DESC);
+        orderByRatingTitle(OrderMode.DESC, OrderMode.ASC);
     }
 
     public PreparedStatement prepareStatement() throws SQLException {
@@ -171,12 +170,12 @@ public class MovieListQuery extends BaseQuery {
         this.genreId = genreId;
     }
 
-    public void orderByTitleRating(int titleMode, int ratingMode) {
+    public void orderByTitleRating(OrderMode titleMode, OrderMode ratingMode) {
         this.order[0] = "m.title " + (titleMode == OrderMode.ASC ? "ASC" : "DESC");
         this.order[1] = "r.rating " + (ratingMode == OrderMode.ASC ? "ASC" : "DESC");
     }
 
-    public void orderByRatingTitle(int ratingMode, int titleMode) {
+    public void orderByRatingTitle(OrderMode ratingMode, OrderMode titleMode) {
         this.order[0] = "r.rating " + (ratingMode == OrderMode.ASC ? "ASC" : "DESC");
         this.order[1] = "m.title " + (titleMode == OrderMode.ASC ? "ASC" : "DESC");
     }
