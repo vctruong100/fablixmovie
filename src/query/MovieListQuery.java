@@ -169,11 +169,11 @@ public class MovieListQuery extends BaseQuery {
 
     public void orderByTitleRating(int titleMode, int ratingMode) {
         this.order[0] = "m.title " + (titleMode == OrderMode.ASC ? "ASC" : "DESC");
-        this.order[1] = "rating " + (ratingMode == OrderMode.ASC ? "ASC" : "DESC");
+        this.order[1] = "r.rating " + (ratingMode == OrderMode.ASC ? "ASC" : "DESC");
     }
 
     public void orderByRatingTitle(int ratingMode, int titleMode) {
-        this.order[0] = "rating " + (ratingMode == OrderMode.ASC ? "ASC" : "DESC");
+        this.order[0] = "r.rating " + (ratingMode == OrderMode.ASC ? "ASC" : "DESC");
         this.order[1] = "m.title " + (titleMode == OrderMode.ASC ? "ASC" : "DESC");
     }
 }
