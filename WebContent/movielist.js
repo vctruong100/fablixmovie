@@ -44,6 +44,12 @@ function getQueryParams() {
     const params = new URLSearchParams(window.location.search);
     let queryString = "";
 
+    if (params.has("limit")) {
+        queryString += `&limit=${params.get("limit")}`;
+    }
+    if (params.has("page")) {
+        queryString += `&page=${params.get("page")}`;
+    }
     if (params.has("title")) {
         queryString += `&title=${params.get("title")}`;
     }
