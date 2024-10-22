@@ -1,10 +1,8 @@
 
-public class User {
-
+public class SessionUser {
     private final String username;
 
-    public User(String username) {
+    public SessionUser(String username) {
         this.username = username;
     }
-
 }

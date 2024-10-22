@@ -50,7 +50,7 @@ public class LoginServlet extends HttpServlet {
                 if (loginRs.getString("password").equals(password)) {
                     // Login success:
                     // Set this user into the session
-                    request.getSession().setAttribute("user", new User(username));
+                    request.getSession().setAttribute("user", new SessionUser(username));
                     responseJsonObject.addProperty("status", "success");
                     responseJsonObject.addProperty("message", "success");
                 } else {
