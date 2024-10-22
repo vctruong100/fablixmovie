@@ -1,4 +1,3 @@
-import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
 import javax.naming.InitialContext;
@@ -8,12 +7,15 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+
 import javax.sql.DataSource;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
+
+import query.MovieQuery;
+import resproc.MovieResultProc;
 
 @WebServlet(name = "SingleMovieServlet", urlPatterns = "/api/single-movie")
 public class SingleMovieServlet extends HttpServlet {
@@ -52,107 +54,22 @@ public class SingleMovieServlet extends HttpServlet {
         try (Connection conn = dataSource.getConnection()) {
             // Get a connection from dataSource
 
-            // Create a JSON object for each movie
-            // Contains 8 fields: movie_id, movie_title, movie_year, movie_director, movie_rating,
-            // movie_num_votes, movie_genres (array of genres), movie_stars (array of stars)
-            JsonObject movieJson = new JsonObject();
-            JsonArray movieGenresJson = new JsonArray();
-            JsonArray movieStarsJson = new JsonArray();
+            /*
+             * Perform a movie query and process the result set
+             * with a MovieResultProc
+             *
+             * See MovieResultProc for the format of the movie JSON object
+             */
+            JsonObject movie = new JsonObject();
+            MovieResultProc mrp = new MovieResultProc(movie);
+            MovieQuery mQuery = new MovieQuery(conn, id);
 
-            // Query that grabs info about the movie including its rating
-            String singleMovieQuery = "SELECT * from movies as m, ratings as r " +
-                    "where m.id = ? and r.movieId = m.id";
-
-            // Query that grabs genres associated with the movie
-            String movieGenresQuery = "SELECT * from genres_in_movies as gim, genres as g " +
-                    "where gim.movieId = ? and gim.genreId = g.id";
-
-            // Query that grabs stars associated with the movie
-            String movieStarsQuery = "SELECT * from stars_in_movies as sim, stars as s " +
-                    "where sim.movieId = ? and sim.starId = s.id";
-
-            // Declare statements
-            PreparedStatement singleMovieStatement = conn.prepareStatement(
-                    singleMovieQuery, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
-
-            PreparedStatement movieGenresStatement = conn.prepareStatement(
-                    movieGenresQuery, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
-
-            PreparedStatement movieStarsStatement = conn.prepareStatement(
-                    movieStarsQuery, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
-
-            // Set the parameter represented by "?" in the query to the id we get from url,
-            // num 1 indicates the first "?" in the query
-            singleMovieStatement.setString(1, id);
-            movieGenresStatement.setString(1, id);
-            movieStarsStatement.setString(1, id);
-
-            // Perform the single movie query
-            ResultSet singleMovieRs = singleMovieStatement.executeQuery();
-            if (singleMovieRs.first()) {
-                String movieId = singleMovieRs.getString("movieId");
-                String movieTitle = singleMovieRs.getString("title");
-                String movieYear = singleMovieRs.getString("year");
-                String movieDirector = singleMovieRs.getString("director");
-                String movieRating = singleMovieRs.getString("rating");
-                String movieNumVotes = singleMovieRs.getString("numVotes");
-
-                movieJson.addProperty("movie_id", movieId);
-                movieJson.addProperty("movie_title", movieTitle);
-                movieJson.addProperty("movie_year", movieYear);
-                movieJson.addProperty("movie_director", movieDirector);
-                movieJson.addProperty("movie_rating", movieRating);
-                movieJson.addProperty("movie_num_votes", movieNumVotes);
-            }
-            singleMovieRs.close();
-            singleMovieStatement.close();
-
-            // Perform the movie genres query
-            ResultSet movieGenresRs = movieGenresStatement.executeQuery();
-
-            // Iterate through each row of movieGenresRs
-            while (movieGenresRs.next()) {
-                String genreId = movieGenresRs.getString("genreId");
-                String genreName = movieGenresRs.getString("name");
-
-                // Create a JsonObject based on the data we retrieve from movieGenresRs
-                // Contains 2 fields: genre_id, genre_name
-                JsonObject jsonObject = new JsonObject();
-                jsonObject.addProperty("genre_id", genreId);
-                jsonObject.addProperty("genre_name", genreName);
-
-                // Add to genres array
-                movieGenresJson.add(jsonObject);
-            }
-            movieJson.add("movie_genres", movieGenresJson);
-            movieGenresRs.close();
-            movieGenresStatement.close();
-
-            // Perform the movie stars query
-            ResultSet movieStarsRs = movieStarsStatement.executeQuery();
-
-            // Iterate through each row of movieStarsRs
-            while (movieStarsRs.next()) {
-                String starId = movieStarsRs.getString("starId");
-                String starName = movieStarsRs.getString("name");
-                String starBirthYear = movieStarsRs.getString("birthYear");
-
-                // JsonObject for each star
-                // Contains 3 fields: star_id, star_name, star_birth_year
-                JsonObject jsonObject = new JsonObject();
-                jsonObject.addProperty("star_id", starId);
-                jsonObject.addProperty("star_name", starName);
-                jsonObject.addProperty("star_birth_year", starBirthYear);
-
-                // Add to stars array
-                movieStarsJson.add(jsonObject);
-            }
-            movieJson.add("movie_stars", movieStarsJson);
-            movieStarsRs.close();
-            movieStarsStatement.close();
+            PreparedStatement mStatement = mQuery.prepareStatement();
+            mrp.processResultSet(mStatement.executeQuery());
+            mStatement.close();
 
             // Write JSON string to output
-            out.write(movieJson.toString());
+            out.write(movie.toString());
             // Set response status to 200 (OK)
             response.setStatus(200);
 
