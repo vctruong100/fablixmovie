@@ -16,12 +16,8 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.util.MissingFormatArgumentException;
 
 import query.MovieListQuery;
-import query.MovieStarsQuery;
-import query.MovieGenresQuery;
 import resproc.MovieListResultProc;
 
 @WebServlet(name = "BrowseServlet", urlPatterns = "/api/browse")
@@ -49,15 +45,28 @@ public class BrowseServlet extends HttpServlet {
 
         String alpha = request.getParameter("alpha");
         String genreId = request.getParameter("genre");
+        String limitString = request.getParameter("limit");
+        String pageString = request.getParameter("page");
 
         request.getServletContext().log("browse " + "(alpha=" + alpha +
-                ", genre=" + genreId + ")");
+                ", genre=" + genreId + ", limit=" + limitString +
+                ", page=" + pageString + ")");
 
         PrintWriter out = response.getWriter();
         try (Connection conn = dataSource.getConnection()) {
             JsonArray resultArray = new JsonArray();
             MovieListQuery mlQuery = new MovieListQuery(conn);
             MovieListResultProc mlrp = new MovieListResultProc(resultArray);
+
+            int limit = Integer.parseInt(limitString);
+            if (limit < 1 || limit > 100) {
+                throw new NumberOutOfRange("Limit must be between 1 and 100");
+            }
+            int page = Integer.parseInt(pageString);
+            if (page < 1) {
+                throw new NumberOutOfRange("page must be greater than 0");
+            }
+            int offset = limit * (page - 1);
 
             /* get movies based on the defined parameter */
             if (alpha != null) {
@@ -71,8 +80,10 @@ public class BrowseServlet extends HttpServlet {
                 mlQuery.setGenreId(genreId);
             } else {
                 /* no args defined */
-                throw new MissingFormatArgumentException("must define either alpha or genre");
+                throw new IllegalArgumentException("either alpha or genre must be defined");
             }
+            mlQuery.setLimit(limit);
+            mlQuery.setOffset(offset);
 
             PreparedStatement mlStatement = mlQuery.prepareStatement();
             mlrp.processResultSet(mlStatement.executeQuery());
