@@ -43,10 +43,14 @@ public class BrowseServlet extends HttpServlet {
         response.setCharacterEncoding("UTF-8");
         response.setContentType("application/json");
 
+        SessionUser sessionUser = (SessionUser)request.getSession().getAttribute("user");
+
         String alpha = request.getParameter("alpha");
         String genreId = request.getParameter("genre");
         String limitString = request.getParameter("limit");
         String pageString = request.getParameter("page");
+
+        sessionUser.setBrowseParameters(alpha, genreId);
 
         request.getServletContext().log("browse " + "(alpha=" + alpha +
                 ", genre=" + genreId + ", limit=" + limitString +
@@ -58,14 +62,8 @@ public class BrowseServlet extends HttpServlet {
             MovieListQuery mlQuery = new MovieListQuery(conn);
             MovieListResultProc mlrp = new MovieListResultProc(resultArray);
 
-            int limit = Integer.parseInt(limitString);
-            if (limit < 1 || limit > 100) {
-                throw new NumberOutOfRange("Limit must be between 1 and 100");
-            }
-            int page = Integer.parseInt(pageString);
-            if (page < 1) {
-                throw new NumberOutOfRange("page must be greater than 0");
-            }
+            int limit = sessionUser.parseAndSetLimit(limitString);
+            int page = sessionUser.parseAndSetPage(pageString);
             int offset = limit * (page - 1);
 
             /* get movies based on the defined parameter */

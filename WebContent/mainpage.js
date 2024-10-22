@@ -1,4 +1,4 @@
-let resultsUrl = "movielist.html?limit=10&page=1";
+let resultsUrl = "movielist.html?page=1";
 
 // Fetch genres from the server and populate the genre list
 function handleGenreResult(resultData) {

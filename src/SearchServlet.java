@@ -44,12 +44,16 @@ public class SearchServlet extends HttpServlet {
         response.setCharacterEncoding("UTF-8");
         response.setContentType("application/json");
 
+        SessionUser sessionUser = (SessionUser)request.getSession().getAttribute("user");
+
         String title = request.getParameter("title");
         String year = request.getParameter("year");
         String director = request.getParameter("director");
         String star = request.getParameter("star");
         String limitString = request.getParameter("limit");
         String pageString = request.getParameter("page");
+
+        sessionUser.setSearchParameters(title, year, director, star);
 
         request.getServletContext().log("search " + "(title=" + title +
                 ", year=" + year + ", director=" + director + ", star=" + star +
@@ -59,14 +63,8 @@ public class SearchServlet extends HttpServlet {
         try (Connection conn = dataSource.getConnection()) {
             JsonArray resultArray = new JsonArray();
 
-            int limit = Integer.parseInt(limitString);
-            if (limit < 1 || limit > 100) {
-                throw new NumberOutOfRange("limit must be between 1 and 100");
-            }
-            int page = Integer.parseInt(pageString);
-            if (page < 1) {
-                throw new NumberOutOfRange("page must be greater than 0");
-            }
+            int limit = sessionUser.parseAndSetLimit(limitString);
+            int page = sessionUser.parseAndSetPage(pageString);
             int offset = limit * (page - 1);
 
             MovieListQuery mlQuery = new MovieListQuery(conn);
@@ -108,7 +106,7 @@ public class SearchServlet extends HttpServlet {
             // Set response status to 500 (Internal Server Error)
             response.setStatus(500);
 
-    } finally {
+        } finally {
             out.close();
         }
 
