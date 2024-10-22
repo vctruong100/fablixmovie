@@ -3,11 +3,16 @@ import com.google.gson.JsonObject;
 
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
+
+import com.mysql.cj.Session;
 import jakarta.servlet.ServletConfig;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import query.MovieListQuery;
+import resproc.MovieListResultProc;
+
 import javax.sql.DataSource;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -35,12 +40,16 @@ public class MovieListServlet extends HttpServlet {
      * response)
      */
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
-
         response.setCharacterEncoding("UTF-8");
         response.setContentType("application/json"); // Response mime type
 
-        // The log message can be found in localhost log
-        request.getServletContext().log("getting top 20 movies by rating");
+        /*
+         * This api service shall only be used to retrieve
+         * search results using parameters from the HttpSession
+         *
+         * For parameterized queries, use the search/browse APIs.
+         */
+        SessionUser sessionUser = (SessionUser)request.getSession().getAttribute("user");
 
         // Output stream to STDOUT
         PrintWriter out = response.getWriter();
@@ -48,102 +57,46 @@ public class MovieListServlet extends HttpServlet {
         // Get a connection from dataSource and let resource manager close the connection after usage.
         try (Connection conn = dataSource.getConnection()) {
             // Get a connection from dataSource
+            JsonArray resultArray = new JsonArray();
+            MovieListQuery mlQuery = new MovieListQuery(conn);
+            MovieListResultProc mlrp = new MovieListResultProc(resultArray);
 
-            // JSON array for the top 20 movies
-            // Each movie contains 8 fields: movie_id, movie_title, movie_year, movie_director, movie_rating,
-            // movie_num_votes, movie_genres (first 3 genres), movie_stars (first 3 stars)
-            JsonArray topMoviesJson = new JsonArray();
+            int limit = sessionUser.parseAndSetLimit(null);
+            int page = sessionUser.parseAndSetPage(null);
+            int offset = limit * (page - 1);
 
-            // Query that grabs the top 20 movies by rating
-            String topMoviesQuery = "SELECT * from movies as m, ratings as r " +
-                    "where m.id = r.movieId " +
-                    "order by r.rating desc limit 20";
+            mlQuery.setLimit(limit);
+            mlQuery.setOffset(offset);
 
-            // Declare our statement
-            PreparedStatement topMoviesStatement = conn.prepareStatement(topMoviesQuery);
-
-            // Perform the top movies query
-            ResultSet topMoviesRs = topMoviesStatement.executeQuery();
-
-            // Iterate through each row of rs
-            while (topMoviesRs.next()) {
-                // Create a JsonArray for the first 3 genres / stars
-                JsonArray movieGenresJson = new JsonArray();
-                JsonArray movieStarsJson = new JsonArray();
-
-                // Retrieve movie details
-                String movieId = topMoviesRs.getString("movieId");
-                String movieTitle = topMoviesRs.getString("title");
-                String movieYear = topMoviesRs.getString("year");
-                String movieDirector = topMoviesRs.getString("director");
-                String movieRating = topMoviesRs.getString("rating");
-                String movieNumVotes = topMoviesRs.getString("numVotes");
-
-                // Create queries to get first 3 genres and stars for each movie
-                // Prepare statements, then perform the queries
-                String genresQuery = "SELECT * from genres_in_movies as gim, genres as g " +
-                        "where gim.movieId = ? and gim.genreId = g.id " +
-                        "limit 3";
-
-                String starsQuery = "SELECT * from stars_in_movies as sim, stars as s " +
-                        "where sim.movieId = ? and sim.starId = s.id " +
-                        "limit 3";
-
-                PreparedStatement genresStatement = conn.prepareStatement(genresQuery);
-                PreparedStatement starsStatement = conn.prepareStatement(starsQuery);
-                genresStatement.setString(1, movieId);
-                starsStatement.setString(1, movieId);
-
-                ResultSet genresRs = genresStatement.executeQuery();
-                while (genresRs.next()) {
-                    // Prepare genre info (genre_id, genre_name)
-                    String genreId = genresRs.getString("genreId");
-                    String genreName = genresRs.getString("name");
-
-                    JsonObject genreJson = new JsonObject();
-                    genreJson.addProperty("genre_id", genreId);
-                    genreJson.addProperty("genre_name", genreName);
-
-                    movieGenresJson.add(genreJson);
-                }
-                genresRs.close();
-                genresStatement.close();
-
-                ResultSet starsRs = starsStatement.executeQuery();
-                while (starsRs.next()) {
-                    // Prepare star info (star_id, star_name, star_birth_year)
-                    String starId = starsRs.getString("starId");
-                    String starName = starsRs.getString("name");
-                    String starBirthYear = starsRs.getString("birthYear");
-
-                    JsonObject starJson = new JsonObject();
-                    starJson.addProperty("star_id", starId);
-                    starJson.addProperty("star_name", starName);
-                    starJson.addProperty("star_birth_year", starBirthYear);
-
-                    movieStarsJson.add(starJson);
-                }
-                starsRs.close();
-                starsStatement.close();
-
-                // Create a JsonObject for the movie
-                JsonObject movieJson = new JsonObject();
-                movieJson.addProperty("movie_id", movieId);
-                movieJson.addProperty("movie_title", movieTitle);
-                movieJson.addProperty("movie_year", movieYear);
-                movieJson.addProperty("movie_director", movieDirector);
-                movieJson.addProperty("movie_rating", movieRating);
-                movieJson.addProperty("movie_num_votes", movieNumVotes);
-                movieJson.add("movie_genres", movieGenresJson);
-                movieJson.add("movie_stars", movieStarsJson);
-
-                topMoviesJson.add(movieJson);
+            switch(sessionUser.getQueryMode()) {
+                case SEARCH:
+                    String[] searchParameters = sessionUser.getSearchParameters();
+                    String title = searchParameters[0];
+                    String director = searchParameters[1];
+                    String year = searchParameters[2];
+                    String star = searchParameters[3];
+                    mlQuery.setTitle(title);
+                    mlQuery.setDirector(director);
+                    mlQuery.setYear(year);
+                    mlQuery.setStar(star);
+                    break;
+                case BROWSE:
+                    String[] browseParameters = sessionUser.getBrowseParameters();
+                    String alpha = browseParameters[0];
+                    String genreId = browseParameters[1];
+                    mlQuery.setAlpha(alpha);
+                    mlQuery.setGenreId(genreId);
+                    break;
+                default:
+                    throw new RuntimeException("query is undefined");
             }
-            topMoviesRs.close();
-            topMoviesStatement.close();
+
+            PreparedStatement mlStatement = mlQuery.prepareStatement();
+            mlrp.processResultSet(mlStatement.executeQuery());
+            mlStatement.close();
 
             // Write JSON string to output
-            out.write(topMoviesJson.toString());
+            out.write(resultArray.toString());
             // Set response status to 200 (OK)
             response.setStatus(200);
 

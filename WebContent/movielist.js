@@ -84,7 +84,16 @@ jQuery(document).ready(() => {
     const queryParams = getQueryParams();
     // placeholder4
     // Makes the HTTP GET request and registers on success callback function handleMovieResult
-    if (queryParams.includes("alpha") || queryParams.includes("genre")) {
+    if (queryParams.length === 0) {
+        // no params; default to the movie-list API to pull
+        // parameters from the current session
+        jQuery.ajax({
+            dataType: "json",
+            method: "GET",
+            url: `api/movie-list`,
+            success: (resultData) => handleMovieResult(resultData)
+        });
+    } else if (queryParams.includes("alpha") || queryParams.includes("genre")) {
         jQuery.ajax({
             dataType: "json",
             method: "GET",
