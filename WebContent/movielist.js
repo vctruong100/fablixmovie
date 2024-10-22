@@ -62,7 +62,11 @@ function getQueryParams() {
     if (params.has("start")) {
         queryString += `&start=${params.get("start")}`;
     }
-
+    if (params.has("alpha")) {
+        const alphaValue = params.get("alpha");
+        console.log("Alpha value: " + alphaValue);  // Log the alpha value for debugging
+        queryString += `&alpha=${params.get("alpha")}`;
+    }
     return queryString;
 }
 
@@ -77,7 +81,7 @@ jQuery(document).ready(() => {
     jQuery.ajax({
         dataType: "json",  // Setting return data type
         method: "GET",     // Setting request method
-        url: `api/movie-list?${queryParams}`,
+        url: `api/browse?${queryParams}`,
         success: (resultData) => handleMovieResult(resultData)  // Setting callback function to handle the returned data
     });
 });

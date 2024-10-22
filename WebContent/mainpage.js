@@ -1,44 +1,44 @@
 // Fetch genres from the server and populate the genre list
-function loadGenres() {
-    jQuery.ajax({
-        dataType: "json",
-        method: "GET",
-        url: "api/main-page",
-        success: (resultData) => {
-            console.log("Genres loaded:", resultData);
-
-            let genreListElement = jQuery("#genre_list");
-            resultData.forEach(genre => {
-                genreListElement.append(`<li><a href="movielist.html?genre=${genre.genre_name}">${genre.genre_name}</a></li>`);
-            });
-        },
-        error: (error) => {
-            console.error("Error loading genres:", error);
-        }
+function handleGenreResult(resultData) {
+    let genreListElement = jQuery("#genre_list");
+    resultData.forEach(genre => {
+        let genreHTML = `<li><a href="movielist.html?genre=${genre.genre_id}">${genre.genre_name}</a></li>`;
+        genreListElement.append(genreHTML);
     });
 }
 
 // Populate the alphabet list for title browsing
-function loadAlphabetList() {
-    const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split('');
+function handleAlphabetList() {
     let alphabetListElement = jQuery("#alphabet_list");
+    const alphabet = [...'ABCDEFGHIJKLMNOPQRSTUVWXYZ*'];
 
     alphabet.forEach(letter => {
-        alphabetListElement.append(`<li><a href="movielist.html?start=${letter}">${letter}</a></li>`);
+        let letterHTML = `<li><a href="movielist.html?alpha=${letter}">${letter}</a></li>`;
+        alphabetListElement.append(letterHTML);
     });
-    alphabetListElement.append(`<li><a href="movielist.html?start=*">#</a></li>`);
 }
 
-// Handle the search form submission
-jQuery("#search_form").submit(function (event) {
-    event.preventDefault();
-
-    const searchParams = jQuery(this).serialize();
-    window.location.href = `movielist.html?${searchParams}`;
-});
-
-// Load the genres and alphabet list when the page is ready
 jQuery(document).ready(() => {
-    loadGenres();
-    loadAlphabetList();
+    // Load genres from MainPageServlet
+    jQuery.ajax({
+        dataType: "json",
+        method: "GET",
+        url: "api/main-page",  // Calls MainPageServlet to get genres
+        success: handleGenreResult
+    });
+
+    // Populate alphabet list
+    handleAlphabetList();
+
+    // Handle search form submission
+    jQuery("#search_form").submit((event) => {
+        event.preventDefault();
+        const title = jQuery('input[name="title"]').val();
+        const year = jQuery('input[name="year"]').val();
+        const director = jQuery('input[name="director"]').val();
+        const star = jQuery('input[name="star"]').val();
+
+        let searchQuery = `movielist.html?title=${title}&year=${year}&director=${director}&star=${star}`;
+        window.location.href = searchQuery;  // Redirect to Movie List page with search parameters
+    });
 });
