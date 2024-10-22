@@ -6,7 +6,7 @@ import java.sql.Connection;
  * Collects stars associated with a movie id and orders the results
  * by how prolific a star is and their names
  */
-public class MovieStarsQuery extends MovieGroupingQuery {
+public class MovieStarsQuery extends GroupingQuery {
     public MovieStarsQuery(Connection conn, String movieId) {
         super(conn, movieId);
         builder.append(

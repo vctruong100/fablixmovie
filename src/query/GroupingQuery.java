@@ -5,16 +5,16 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
 /*
- * Collects a grouping of rows based on a single movie id
+ * Collects a grouping of rows based on a single kind of id
  */
-abstract class MovieGroupingQuery extends BaseQuery {
+abstract class GroupingQuery extends BaseQuery {
     protected final StringBuilder builder;
-    private final String movieId;
+    private final String kindId;
     private int limit;
 
-    public MovieGroupingQuery(Connection conn, String movieId) {
+    public GroupingQuery(Connection conn, String kindId) {
         super(conn);
-        this.movieId = movieId;
+        this.kindId = kindId;
         builder = new StringBuilder();
     }
 
@@ -28,8 +28,8 @@ abstract class MovieGroupingQuery extends BaseQuery {
         }
 
         queryString = builder.toString();
-        statement = conn.prepareStatement(builder.toString());
-        statement.setString(1, movieId);
+        statement = conn.prepareStatement(queryString);
+        statement.setString(1, kindId);
         return statement;
     }
 

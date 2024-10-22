@@ -6,7 +6,7 @@ import java.sql.Connection;
  * Collects genres associated with a movie id and orders the results
  * by the genre name
  */
-public class MovieGenresQuery extends MovieGroupingQuery {
+public class MovieGenresQuery extends GroupingQuery {
     public MovieGenresQuery(Connection conn, String movieId) {
         super(conn, movieId);
         builder.append(
