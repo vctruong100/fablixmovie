@@ -20,8 +20,8 @@ function handleMovieResult(resultData) {
 
         // Genres
         rowHTML += "<td>";
-        movie.movie_genres.forEach((genre, index) => {
-            rowHTML += genre.genre_name;
+        movie.movie_genres.slice(0, 3).forEach((genre, index) => {
+            rowHTML += `<a href="movielist.html?genre=${genre.genre_id}">${genre.genre_name}</a>`;
             if (index < movie.movie_genres.length - 1) rowHTML += ", ";
         });
         rowHTML += "</td>";
@@ -82,7 +82,7 @@ function getQueryParams() {
  */
 jQuery(document).ready(() => {
     const queryParams = getQueryParams();
-    // placeholder4
+    // placeholder5
     // Makes the HTTP GET request and registers on success callback function handleMovieResult
     if (queryParams.length === 0) {
         // no params; default to the movie-list API to pull

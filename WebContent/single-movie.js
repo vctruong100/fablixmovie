@@ -15,10 +15,10 @@ function handleMovieResult(resultData) {
     // Populate genres
     let movieGenresElement = jQuery("#movie-genres");
     let genres = resultData["movie_genres"];
-    for (let i = 0; i < genres.length; i++) {
-        let genreItem = "<li>" + genres[i]["genre_name"] + "</li>";
+    genres.forEach((genre) => {
+        let genreItem = `<li><a href="movielist.html?genre=${genre.genre_id}">${genre.genre_name}</a></li>`;
         movieGenresElement.append(genreItem);
-    }
+    });
 
     // Populate stars
     let movieStarsElement = jQuery("#movie-stars");
@@ -30,7 +30,6 @@ function handleMovieResult(resultData) {
         movieStarsElement.append(starItem);
     }
 }
-
 /**
  * Once the JS is loaded, the following code will be executed.
  */
