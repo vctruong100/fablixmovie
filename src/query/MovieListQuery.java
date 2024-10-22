@@ -115,6 +115,7 @@ public class MovieListQuery extends BaseQuery {
         builder.append(order[0]);
         builder.append(", ");
         builder.append(order[1]);
+        System.out.println("Executing query with ORDER BY: " + builder.toString());
 
         if (limit > 0) {
             builder.append(" LIMIT ");
@@ -126,6 +127,7 @@ public class MovieListQuery extends BaseQuery {
         }
 
         queryString = builder.toString();
+        System.out.println("Executing query: " + builder.toString());
         statement = conn.prepareStatement(queryString);
         for (int i = 0; i < paramCount; i++) {
             statement.setString(i + 1, params[i]);
@@ -173,10 +175,14 @@ public class MovieListQuery extends BaseQuery {
     public void orderByTitleRating(OrderMode titleMode, OrderMode ratingMode) {
         this.order[0] = "m.title " + (titleMode == OrderMode.ASC ? "ASC" : "DESC");
         this.order[1] = "r.rating " + (ratingMode == OrderMode.ASC ? "ASC" : "DESC");
+        System.out.println("Ordering by title and rating: " + this.order[0] + ", " + this.order[1]);
+
     }
 
     public void orderByRatingTitle(OrderMode ratingMode, OrderMode titleMode) {
         this.order[0] = "r.rating " + (ratingMode == OrderMode.ASC ? "ASC" : "DESC");
         this.order[1] = "m.title " + (titleMode == OrderMode.ASC ? "ASC" : "DESC");
+        System.out.println("Ordering by rating and title: " + this.order[0] + ", " + this.order[1]);
+
     }
 }

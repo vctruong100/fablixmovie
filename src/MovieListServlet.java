@@ -43,6 +43,15 @@ public class MovieListServlet extends HttpServlet {
         response.setCharacterEncoding("UTF-8");
         response.setContentType("application/json"); // Response mime type
 
+        // Log all query parameters
+        System.out.println("Query Parameters:");
+        request.getParameterMap().forEach((key, value) -> {
+            System.out.println(key + ": " + String.join(", ", value));
+        });
+
+
+        String sortBy = request.getParameter("sortBy");
+        System.out.println("Received sortBy parameter: " + sortBy);
         /*
          * This api service shall only be used to retrieve
          * search results using parameters from the HttpSession
@@ -68,6 +77,38 @@ public class MovieListServlet extends HttpServlet {
             mlQuery.setLimit(limit);
             mlQuery.setOffset(offset);
 
+            if (sortBy != null) {
+                switch (sortBy) {
+                    case "title-asc-rating-asc":
+                        mlQuery.orderByTitleRating(MovieListQuery.OrderMode.ASC, MovieListQuery.OrderMode.ASC);
+                        break;
+                    case "title-asc-rating-desc":
+                        mlQuery.orderByTitleRating(MovieListQuery.OrderMode.ASC, MovieListQuery.OrderMode.DESC);
+                        break;
+                    case "title-desc-rating-asc":
+                        mlQuery.orderByTitleRating(MovieListQuery.OrderMode.DESC, MovieListQuery.OrderMode.ASC);
+                        break;
+                    case "title-desc-rating-desc":
+                        mlQuery.orderByTitleRating(MovieListQuery.OrderMode.DESC, MovieListQuery.OrderMode.DESC);
+                        break;
+                    case "rating-asc-title-asc":
+                        mlQuery.orderByRatingTitle(MovieListQuery.OrderMode.ASC, MovieListQuery.OrderMode.ASC);
+                        break;
+                    case "rating-asc-title-desc":
+                        mlQuery.orderByRatingTitle(MovieListQuery.OrderMode.ASC, MovieListQuery.OrderMode.DESC);
+                        break;
+                    case "rating-desc-title-asc":
+                        mlQuery.orderByRatingTitle(MovieListQuery.OrderMode.DESC, MovieListQuery.OrderMode.ASC);
+                        break;
+                    case "rating-desc-title-desc":
+                        mlQuery.orderByRatingTitle(MovieListQuery.OrderMode.DESC, MovieListQuery.OrderMode.DESC);
+                        break;
+                    default:
+                        mlQuery.orderByRatingTitle(MovieListQuery.OrderMode.DESC, MovieListQuery.OrderMode.ASC);
+                        break;
+                }
+            }
+
             switch(sessionUser.getQueryMode()) {
                 case SEARCH:
                     String[] searchParameters = sessionUser.getSearchParameters();
@@ -88,13 +129,12 @@ public class MovieListServlet extends HttpServlet {
                     mlQuery.setGenreId(genreId);
                     break;
                 default:
-                    throw new RuntimeException("query is undefined");
+                    break;
             }
 
             PreparedStatement mlStatement = mlQuery.prepareStatement();
             mlrp.processResultSet(mlStatement.executeQuery());
             mlStatement.close();
-
             // Write JSON string to output
             out.write(resultArray.toString());
             // Set response status to 200 (OK)

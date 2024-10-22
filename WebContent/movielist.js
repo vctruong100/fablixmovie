@@ -5,9 +5,11 @@
  */
 function handleMovieResult(resultData) {
     console.log("handleMovieResult: populating movie list from resultData");
+    console.log(resultData);
 
     // Find the element to populate the movie list
     let movieListElement = jQuery("#movie_list_body");
+    movieListElement.empty();
 
     // Iterate through resultData and populate the movie list
     resultData.forEach(movie => {
@@ -73,39 +75,67 @@ function getQueryParams() {
         console.log("Alpha value: " + alphaValue);  // Log the alpha value for debugging
         queryString += `&alpha=${params.get("alpha")}`;
     }
+    const sortByValue = jQuery("#sort-by").val();
+    if (sortByValue) {
+        queryString += `&sortBy=${sortByValue}`;
+    }
+    console.log("Generated query string: " + queryString);
+
     return queryString;
 }
-
 
 /**
  * Once this .js is loaded, the following scripts will be executed by the browser.
  */
 jQuery(document).ready(() => {
     const queryParams = getQueryParams();
-    // placeholder5
-    // Makes the HTTP GET request and registers on success callback function handleMovieResult
-    if (queryParams.length === 0) {
-        // no params; default to the movie-list API to pull
-        // parameters from the current session
-        jQuery.ajax({
-            dataType: "json",
-            method: "GET",
-            url: `api/movie-list`,
-            success: (resultData) => handleMovieResult(resultData)
-        });
-    } else if (queryParams.includes("alpha") || queryParams.includes("genre")) {
-        jQuery.ajax({
-            dataType: "json",
-            method: "GET",
-            url: `api/browse?${queryParams}`,
-            success: (resultData) => handleMovieResult(resultData)
-        });
-    } else {
-        jQuery.ajax({
-            dataType: "json",
-            method: "GET",
-            url: `api/search?${queryParams}`,
-            success: (resultData) => handleMovieResult(resultData)
-        });
-    }
+    // placeholder4
+
+    const updateMovieList = (queryParams) => {
+        // Determine which API to call based on queryParams
+        if (queryParams.includes("sortBy")) {
+            jQuery.ajax({
+                dataType: "json",
+                method: "GET",
+                url: `api/movie-list?${queryParams}`,
+                success: (resultData) => handleMovieResult(resultData),
+            });
+        }
+        // Case for browsing by alphabet or genre
+        else if (queryParams.includes("alpha") || queryParams.includes("genre")) {
+            jQuery.ajax({
+                dataType: "json",
+                method: "GET",
+                url: `api/browse?${queryParams}`,
+                success: (resultData) => handleMovieResult(resultData),
+            });
+        }
+        // Case for search
+        else if (queryParams.includes("title") || queryParams.includes("year") ||
+            queryParams.includes("director") || queryParams.includes("star")) {
+            jQuery.ajax({
+                dataType: "json",
+                method: "GET",
+                url: `api/search?${queryParams}`,
+                success: (resultData) => handleMovieResult(resultData),
+            });
+        }
+        // Default case for general movie listing (no search or filters applied)
+        else {
+            jQuery.ajax({
+                dataType: "json",
+                method: "GET",
+                url: `api/movie-list?${queryParams}`,
+                success: (resultData) => handleMovieResult(resultData),
+            });
+        }
+    };
+
+    // Handle sorting selection change
+    jQuery("#sort-by").on("change", function() {
+        const queryParams = getQueryParams();
+        updateMovieList(queryParams);
+    });
+
+    updateMovieList(queryParams);
 });
