@@ -35,7 +35,9 @@ public class MovieListQuery extends BaseQuery {
 
     public MovieListQuery(Connection conn) {
         super(conn);
-        builder = new StringBuilder("SELECT * FROM ");
+        builder = new StringBuilder(
+                "SELECT m.*, IFNULL(r.rating, 0) 'r.rating', IFNULL(r.numVotes, 0) 'r.numVotes' " +
+                "FROM movies m LEFT JOIN ratings r ON m.id = r.movieId");
         params = new String[6]; /* upper bound based on the final query string */
         paramCount = 0;
 
@@ -59,10 +61,6 @@ public class MovieListQuery extends BaseQuery {
         PreparedStatement statement;
         ArrayList<String> joinClauses = new ArrayList<>();
         ArrayList<String> whereClauses = new ArrayList<>();
-
-        joinClauses.add("movies m");
-        joinClauses.add("ratings r");
-        whereClauses.add("m.id = r.movieId");
 
         /* search clauses */
         if (title != null && !title.isEmpty()) {
@@ -171,11 +169,11 @@ public class MovieListQuery extends BaseQuery {
 
     public void orderByTitleRating(int titleMode, int ratingMode) {
         this.order[0] = "m.title " + (titleMode == OrderMode.ASC ? "ASC" : "DESC");
-        this.order[1] = "r.rating " + (ratingMode == OrderMode.ASC ? "ASC" : "DESC");
+        this.order[1] = "rating " + (ratingMode == OrderMode.ASC ? "ASC" : "DESC");
     }
 
     public void orderByRatingTitle(int ratingMode, int titleMode) {
-        this.order[0] = "r.rating " + (ratingMode == OrderMode.ASC ? "ASC" : "DESC");
+        this.order[0] = "rating " + (ratingMode == OrderMode.ASC ? "ASC" : "DESC");
         this.order[1] = "m.title " + (titleMode == OrderMode.ASC ? "ASC" : "DESC");
     }
 }

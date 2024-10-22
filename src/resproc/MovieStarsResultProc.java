@@ -21,9 +21,9 @@ public class MovieStarsResultProc extends BaseResultProc {
         while (rs.next()) {
             JsonObject star = new JsonObject();
 
-            String starId = rs.getString("starId");
-            String starName = rs.getString("name");
-            String starBirthYear = rs.getString("birthYear");
+            String starId = rs.getString("s.id");
+            String starName = rs.getString("s.name");
+            String starBirthYear = rs.getString("s.birthYear");
             String starMovieCount = rs.getString("movieCount");
 
             star.addProperty("star_id", starId);

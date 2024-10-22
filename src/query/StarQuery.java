@@ -17,7 +17,7 @@ public class StarQuery extends BaseQuery {
     }
 
     public PreparedStatement prepareStatement() throws SQLException {
-        String queryString = "SELECT s.id starId, s.name, s.birthYear FROM stars s " +
+        String queryString = "SELECT s.id, s.name, s.birthYear FROM stars s " +
                 "WHERE s.id = ?";
         PreparedStatement statement = conn.prepareStatement(queryString);
         statement.setString(1, starId);

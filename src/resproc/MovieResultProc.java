@@ -32,12 +32,12 @@ public class MovieResultProc extends BaseResultProc {
             MovieGenresResultProc mgrp = new MovieGenresResultProc(genres);
             MovieStarsResultProc msrp = new MovieStarsResultProc(stars);
 
-            String movieId = rs.getString("movieId");
-            String movieTitle = rs.getString("title");
-            String movieYear = rs.getString("year");
-            String movieDirector = rs.getString("director");
-            String movieRating = rs.getString("rating");
-            String movieNumVotes = rs.getString("numVotes");
+            String movieId = rs.getString("m.id");
+            String movieTitle = rs.getString("m.title");
+            String movieYear = rs.getString("m.year");
+            String movieDirector = rs.getString("m.director");
+            String movieRating = rs.getString("r.rating");
+            String movieNumVotes = rs.getString("r.numVotes");
 
             /* process genres */
             MovieGenresQuery mgQuery = new MovieGenresQuery(

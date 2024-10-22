@@ -29,9 +29,9 @@ public class StarResultProc extends BaseResultProc {
         if (rs.next()) {
             StarMoviesResultProc smrp = new StarMoviesResultProc(movies);
 
-            String starId = rs.getString("starId");
-            String starName = rs.getString("name");
-            String starBirthYear = rs.getString("birthYear");
+            String starId = rs.getString("s.id");
+            String starName = rs.getString("s.name");
+            String starBirthYear = rs.getString("s.birthYear");
 
             /* process movies */
             StarMoviesQuery smQuery = new StarMoviesQuery(

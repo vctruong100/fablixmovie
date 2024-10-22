@@ -21,8 +21,8 @@ public class MovieGenresResultProc extends BaseResultProc {
         while (rs.next()) {
             JsonObject genre = new JsonObject();
 
-            String genreId = rs.getString("genreId");
-            String genreName = rs.getString("name");
+            String genreId = rs.getString("g.id");
+            String genreName = rs.getString("g.name");
 
             genre.addProperty("genre_id", genreId);
             genre.addProperty("genre_name", genreName);
