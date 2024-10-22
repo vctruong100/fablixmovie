@@ -76,12 +76,21 @@ function getQueryParams() {
  */
 jQuery(document).ready(() => {
     const queryParams = getQueryParams();
-
+    // placeholder4
     // Makes the HTTP GET request and registers on success callback function handleMovieResult
-    jQuery.ajax({
-        dataType: "json",  // Setting return data type
-        method: "GET",     // Setting request method
-        url: `api/browse?${queryParams}`,
-        success: (resultData) => handleMovieResult(resultData)  // Setting callback function to handle the returned data
-    });
+    if (queryParams.includes("alpha") || queryParams.includes("genre")) {
+        jQuery.ajax({
+            dataType: "json",
+            method: "GET",
+            url: `api/browse?${queryParams}`,
+            success: (resultData) => handleMovieResult(resultData)
+        });
+    } else {
+        jQuery.ajax({
+            dataType: "json",
+            method: "GET",
+            url: `api/search?${queryParams}`,
+            success: (resultData) => handleMovieResult(resultData)
+        });
+    }
 });

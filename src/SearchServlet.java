@@ -3,6 +3,7 @@ import com.google.gson.JsonObject;
 
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
+import java.io.StringWriter;
 
 import com.mysql.cj.exceptions.NumberOutOfRange;
 import jakarta.servlet.ServletConfig;
@@ -60,17 +61,27 @@ public class SearchServlet extends HttpServlet {
         try (Connection conn = dataSource.getConnection()) {
             JsonArray resultArray = new JsonArray();
 
-            int limit = Integer.parseInt(limitString);
+            int limit = (limitString == null || limitString.isEmpty()) ? 10 : Integer.parseInt(limitString);
             if (limit < 1 || limit > 100) {
                 throw new NumberOutOfRange("limit must be between 1 and 100");
             }
-            int offset = limit * Integer.parseInt(pageString);
+            int page = (pageString == null || pageString.isEmpty()) ? 1 : Integer.parseInt(pageString);
+            int offset = limit * (page - 1);
 
             MovieListQuery mlQuery = new MovieListQuery(conn);
-            mlQuery.setTitle(title);
-            mlQuery.setYear(year);
-            mlQuery.setDirector(director);
-            mlQuery.setStar(star);
+            // Check for empty/null parameters and set only if not null or empty
+            if (title != null && !title.trim().isEmpty()) {
+                mlQuery.setTitle(title);
+            }
+            if (year != null && !year.trim().isEmpty()) {
+                mlQuery.setYear(year);
+            }
+            if (director != null && !director.trim().isEmpty()) {
+                mlQuery.setDirector(director);
+            }
+            if (star != null && !star.trim().isEmpty()) {
+                mlQuery.setStar(star);
+            }
             mlQuery.setLimit(limit);
             mlQuery.setOffset(offset);
 
@@ -151,16 +162,27 @@ public class SearchServlet extends HttpServlet {
             response.setStatus(200);
 
         } catch (Exception e) {
-            // Write error message JSON object to output
+            // Write detailed error message JSON object to output
             JsonObject jsonObject = new JsonObject();
             jsonObject.addProperty("errorMessage", e.getMessage());
+
+            // Capture and log the stack trace to help identify where the error occurred
+            StringWriter sw = new StringWriter();
+            PrintWriter pw = new PrintWriter(sw);
+            e.printStackTrace(pw);
+            String stackTrace = sw.toString();
+
+            jsonObject.addProperty("stackTrace", stackTrace); // Include stack trace in the response
             out.write(jsonObject.toString());
 
-            // Log error to localhost log
-            request.getServletContext().log("Error:", e);
+            // Log error to localhost log with full details
+            request.getServletContext().log("Error: " + e.getMessage());
+            request.getServletContext().log(stackTrace);  // Log stack trace in server logs
+
             // Set response status to 500 (Internal Server Error)
             response.setStatus(500);
-        } finally {
+
+    } finally {
             out.close();
         }
 
