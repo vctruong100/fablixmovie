@@ -76,11 +76,11 @@ public class MovieListQuery extends BaseQuery {
             params[paramCount++] = year;
         }
         if (star != null && !star.isEmpty()) {
-            joinClauses.add("stars_in_movies sim, stars s");
-            whereClauses.add("m.id = sim.movieId AND sim.starId = s.id AND LOWER(s.name) = LOWER(?)");
+            joinClauses.add("JOIN stars_in_movies sim ON m.id = sim.movieId");
+            joinClauses.add("JOIN stars s ON sim.starId = s.id");
+            whereClauses.add("LOWER(s.name) LIKE LOWER(?)");
             params[paramCount++] = "%" + star + "%";
         }
-
         /* browse clauses */
         if (alpha != null && !alpha.isEmpty()) {
             if (alpha.charAt(0) == '*') {
@@ -92,17 +92,16 @@ public class MovieListQuery extends BaseQuery {
             }
         }
         if (genreId != null && !genreId.isEmpty()) {
-            joinClauses.add("genres_in_movies gim, genres g");
-            whereClauses.add("m.id = gim.movieId AND g.id = gim.genreId AND g.id = ?");
+            joinClauses.add("JOIN genres_in_movies gim ON m.id = gim.movieId");
+            joinClauses.add("JOIN genres g ON gim.genreId = g.id");
+            whereClauses.add("g.id = ?");
             params[paramCount++] = genreId;
         }
 
         /* append builder with option clauses and pagination clauses */
-        for (int i = 0; i < joinClauses.size() - 1; i++) {
-            builder.append(joinClauses.get(i));
-            builder.append(", ");
+        for (String joinClause : joinClauses) {
+            builder.append(" ").append(joinClause);
         }
-        builder.append(joinClauses.get(joinClauses.size() - 1));
 
         if (!whereClauses.isEmpty()) {
             builder.append(" WHERE ");

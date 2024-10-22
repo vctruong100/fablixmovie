@@ -90,7 +90,7 @@ h1, h2 {
 }
 
 .centered-page .container {
-    max-width: 600px;
+    max-width: 800px;
     background-color: #1c1c1c;
     padding: 20px;
     border-radius: 10px;
@@ -175,4 +175,63 @@ li a {
 
 li a:hover {
     text-decoration: underline;
+}
+
+.flex-grid {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    padding: 0;
+}
+
+.flex-grid li {
+    margin: 10px;
+    padding: 5px;
+    font-size: 18px;
+}
+
+.flex-grid li a {
+    padding: 10px 15px;
+    background-color: #333;
+    border-radius: 5px;
+    color: #e50914;
+    text-decoration: none;
+}
+
+.flex-grid li a:hover {
+    background-color: #444;
+    color: white;
+}
+
+#search_form {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+#search_form input[type="text"],
+#search_form input[type="number"] {
+    flex: 1;
+    margin: 10px;
+    padding: 10px;
+    border: 1px solid #333;
+    border-radius: 5px;
+    background-color: #333;
+    color: #fff;
+}
+
+#search_form button {
+    padding: 10px 20px;
+    margin: 10px;
+    background-color: #e50914;
+    border-radius: 5px;
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+    border: none;
+}
+
+#search_form button:hover {
+    background-color: #f40612;
 }

@@ -45,74 +45,25 @@ public class MovieListServlet extends HttpServlet {
         // Output stream to STDOUT
         PrintWriter out = response.getWriter();
 
-        // Get search parameters from the request
-        String title = request.getParameter("title");
-        String director = request.getParameter("director");
-        String star = request.getParameter("star");
-        String year = request.getParameter("year");
-
         // Get a connection from dataSource and let resource manager close the connection after usage.
         try (Connection conn = dataSource.getConnection()) {
             // Get a connection from dataSource
 
-            // JSON array for movies (whether it's search results or top 20 movies)
+            // JSON array for the top 20 movies
             // Each movie contains 8 fields: movie_id, movie_title, movie_year, movie_director, movie_rating,
             // movie_num_votes, movie_genres (first 3 genres), movie_stars (first 3 stars)
             JsonArray topMoviesJson = new JsonArray();
-            String movieQuery;
-            PreparedStatement movieStatement;
 
-            // If any search parameter is provided, perform search query
-            if (title != null || director != null || star != null || year != null) {
-                // Construct search query using AND logic
-                movieQuery = "SELECT DISTINCT m.id, m.title, m.year, m.director, r.rating, r.numVotes "
-                        + "FROM movies m LEFT JOIN ratings r ON m.id = r.movieId "
-                        + "LEFT JOIN stars_in_movies sim ON m.id = sim.movieId "
-                        + "LEFT JOIN stars s ON sim.starId = s.id "
-                        + "WHERE 1=1 "; // 'WHERE 1=1' ensures we can safely append conditions
+            // Query that grabs the top 20 movies by rating
+            String topMoviesQuery = "SELECT * from movies as m, ratings as r " +
+                    "where m.id = r.movieId " +
+                    "order by r.rating desc limit 20";
 
-                if (title != null && !title.isEmpty()) {
-                    movieQuery += "AND m.title LIKE ? ";
-                }
-                if (director != null && !director.isEmpty()) {
-                    movieQuery += "AND m.director LIKE ? ";
-                }
-                if (star != null && !star.isEmpty()) {
-                    movieQuery += "AND s.name LIKE ? ";
-                }
-                if (year != null && !year.isEmpty()) {
-                    movieQuery += "AND m.year = ? ";
-                }
-
-                movieQuery += "ORDER BY r.rating DESC LIMIT 20";
-
-                movieStatement = conn.prepareStatement(movieQuery);
-
-                // Set parameters dynamically based on search input
-                int paramIndex = 1;
-                if (title != null && !title.isEmpty()) {
-                    movieStatement.setString(paramIndex++, "%" + title + "%");
-                }
-                if (director != null && !director.isEmpty()) {
-                    movieStatement.setString(paramIndex++, "%" + director + "%");
-                }
-                if (star != null && !star.isEmpty()) {
-                    movieStatement.setString(paramIndex++, "%" + star + "%");
-                }
-                if (year != null && !year.isEmpty()) {
-                    movieStatement.setString(paramIndex++, year);
-                }
-
-            } else {
-                // If no search parameters, show top 20 rated movies
-                movieQuery = "SELECT * from movies as m, ratings as r " +
-                        "where m.id = r.movieId " +
-                        "order by r.rating desc limit 20";
-                movieStatement = conn.prepareStatement(movieQuery);
-            }
+            // Declare our statement
+            PreparedStatement topMoviesStatement = conn.prepareStatement(topMoviesQuery);
 
             // Perform the top movies query
-            ResultSet topMoviesRs = movieStatement.executeQuery();
+            ResultSet topMoviesRs = topMoviesStatement.executeQuery();
 
             // Iterate through each row of rs
             while (topMoviesRs.next()) {
@@ -189,7 +140,7 @@ public class MovieListServlet extends HttpServlet {
                 topMoviesJson.add(movieJson);
             }
             topMoviesRs.close();
-            movieStatement.close();
+            topMoviesStatement.close();
 
             // Write JSON string to output
             out.write(topMoviesJson.toString());
