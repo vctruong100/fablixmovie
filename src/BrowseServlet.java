@@ -62,7 +62,7 @@ public class BrowseServlet extends HttpServlet {
             /* get movies based on the defined parameter */
             if (alpha != null) {
                 if (alpha.length() != 1 ||
-                    !Character.isLetterOrDigit(alpha.charAt(0)) ||
+                    !Character.isLetterOrDigit(alpha.charAt(0)) &&
                     alpha.charAt(0) != '*') {
                     throw new IllegalArgumentException("alpha must be a single alphanumeric char or *");
                 }
