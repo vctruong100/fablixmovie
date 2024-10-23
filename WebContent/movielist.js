@@ -15,7 +15,7 @@ function handleMovieResult(resultData) {
     movieListElement.empty();
     totalPages = resultData.totalPages || 1;
 
-    const movies = resultData.movies;
+    let movies = resultData.movies;
 
     if (Array.isArray(movies)) {
         movies.forEach(movie => {
@@ -76,7 +76,7 @@ function getQueryParams() {
     }
     if (params.has("alpha")) {
         const alphaValue = params.get("alpha");
-        console.log("Alpha value: " + alphaValue);  // Log the alpha value for debugging
+        console.log("Alpha value: " + alphaValue);
         queryString += `&alpha=${params.get("alpha")}`;
     }
 
@@ -94,11 +94,13 @@ function getQueryParams() {
 
 const updateMovieList = (queryParams) => {
     // Determine which API to call based on queryParams
-    if (queryParams.includes("sortBy")) {
+    if (queryParams.includes("title") || queryParams.includes("year") ||
+        queryParams.includes("director") || queryParams.includes("star")) {
+        // Case for search
         jQuery.ajax({
             dataType: "json",
             method: "GET",
-            url: `api/movie-list?${queryParams}`,
+            url: `api/search?${queryParams}`,
             success: (resultData) => handleMovieResult(resultData),
         });
     }
@@ -108,16 +110,6 @@ const updateMovieList = (queryParams) => {
             dataType: "json",
             method: "GET",
             url: `api/browse?${queryParams}`,
-            success: (resultData) => handleMovieResult(resultData),
-        });
-    }
-    // Case for search
-    else if (queryParams.includes("title") || queryParams.includes("year") ||
-        queryParams.includes("director") || queryParams.includes("star")) {
-        jQuery.ajax({
-            dataType: "json",
-            method: "GET",
-            url: `api/search?${queryParams}`,
             success: (resultData) => handleMovieResult(resultData),
         });
     }
@@ -136,6 +128,7 @@ const updateMovieList = (queryParams) => {
 jQuery("#sort-by").on("change", function() {
     const queryParams = getQueryParams();
     updateMovieList(queryParams);
+    updateUrl(queryParams);
 });
 
 // Handle page change
@@ -201,6 +194,6 @@ function updateUrl(queryParams) {
  */
 jQuery(document).ready(() => {
     const queryParams = getQueryParams();
-    // placeholder4
+    console.log("Initial queryParams: ", queryParams);
     updateMovieList(queryParams);
 });

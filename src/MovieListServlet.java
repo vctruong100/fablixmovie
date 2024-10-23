@@ -145,20 +145,20 @@ public class MovieListServlet extends HttpServlet {
                 totalRecords = countResultSet.getInt("total");
             }
             countStatement.close();
-            // Calculate total pages based on the limit
             int totalPages = (int) Math.ceil((double) totalRecords / limit);
 
-            // Build the JSON response
             JsonObject responseObject = new JsonObject();
-            responseObject.add("movies", resultArray);  // List of movies
-            responseObject.addProperty("totalRecords", totalRecords);  // Total number of matching records
-            responseObject.addProperty("totalPages", totalPages);  // Total pages
+            responseObject.add("movies", resultArray);
+            responseObject.addProperty("totalRecords", totalRecords);
+            responseObject.addProperty("totalPages", totalPages);
 
             PreparedStatement mlStatement = mlQuery.prepareStatement();
             mlrp.processResultSet(mlStatement.executeQuery());
             mlStatement.close();
+
             // Write JSON string to output
             out.write(responseObject.toString());
+
             // Set response status to 200 (OK)
             response.setStatus(200);
 

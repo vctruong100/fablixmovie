@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 
 import query.MovieListQuery;
 import resproc.MovieListResultProc;
@@ -45,6 +46,9 @@ public class BrowseServlet extends HttpServlet {
 
         SessionUser sessionUser = (SessionUser)request.getSession().getAttribute("user");
 
+        String sortBy = request.getParameter("sortBy");
+        System.out.println("Received sortBy parameter: " + sortBy);
+
         String alpha = request.getParameter("alpha");
         String genreId = request.getParameter("genre");
         String limitString = request.getParameter("limit");
@@ -65,6 +69,38 @@ public class BrowseServlet extends HttpServlet {
             int limit = sessionUser.parseAndSetLimit(limitString);
             int page = sessionUser.parseAndSetPage(pageString);
             int offset = limit * (page - 1);
+
+            if (sortBy != null) {
+                switch (sortBy) {
+                    case "title-asc-rating-asc":
+                        mlQuery.orderByTitleRating(MovieListQuery.OrderMode.ASC, MovieListQuery.OrderMode.ASC);
+                        break;
+                    case "title-asc-rating-desc":
+                        mlQuery.orderByTitleRating(MovieListQuery.OrderMode.ASC, MovieListQuery.OrderMode.DESC);
+                        break;
+                    case "title-desc-rating-asc":
+                        mlQuery.orderByTitleRating(MovieListQuery.OrderMode.DESC, MovieListQuery.OrderMode.ASC);
+                        break;
+                    case "title-desc-rating-desc":
+                        mlQuery.orderByTitleRating(MovieListQuery.OrderMode.DESC, MovieListQuery.OrderMode.DESC);
+                        break;
+                    case "rating-asc-title-asc":
+                        mlQuery.orderByRatingTitle(MovieListQuery.OrderMode.ASC, MovieListQuery.OrderMode.ASC);
+                        break;
+                    case "rating-asc-title-desc":
+                        mlQuery.orderByRatingTitle(MovieListQuery.OrderMode.ASC, MovieListQuery.OrderMode.DESC);
+                        break;
+                    case "rating-desc-title-asc":
+                        mlQuery.orderByRatingTitle(MovieListQuery.OrderMode.DESC, MovieListQuery.OrderMode.ASC);
+                        break;
+                    case "rating-desc-title-desc":
+                        mlQuery.orderByRatingTitle(MovieListQuery.OrderMode.DESC, MovieListQuery.OrderMode.DESC);
+                        break;
+                    default:
+                        mlQuery.orderByRatingTitle(MovieListQuery.OrderMode.DESC, MovieListQuery.OrderMode.ASC);
+                        break;
+                }
+            }
 
             /* get movies based on the defined parameter */
             if (alpha != null) {
@@ -87,8 +123,44 @@ public class BrowseServlet extends HttpServlet {
             mlrp.processResultSet(mlStatement.executeQuery());
             mlStatement.close();
 
-            // Write JSON string to output
-            out.write(resultArray.toString());
+            String countQuery = "SELECT COUNT(*) AS total FROM movies m LEFT JOIN ratings r ON m.id = r.movieId WHERE 1=1";
+
+            if (alpha != null && !alpha.isEmpty()) {
+                if (alpha.equals("*")) {
+                    countQuery += " AND m.title REGEXP '^[^A-Za-z0-9]'";
+                } else {
+                    countQuery += " AND m.title LIKE ?";
+                }
+            } else if (genreId != null && !genreId.isEmpty()) {
+                countQuery += " AND EXISTS (SELECT 1 FROM genres_in_movies gim WHERE gim.genreId = ? AND gim.movieId = m.id)";
+            }
+
+            PreparedStatement countStatement = conn.prepareStatement(countQuery);
+
+            int paramIndex = 1;
+            if (alpha != null && !alpha.isEmpty() && !alpha.equals("*")) {
+                countStatement.setString(paramIndex++, alpha + "%");
+            } else if (genreId != null && !genreId.isEmpty()) {
+                countStatement.setString(paramIndex++, genreId);
+            }
+
+            ResultSet countResultSet = countStatement.executeQuery();
+            int totalRecords = 0;
+            if (countResultSet.next()) {
+                totalRecords = countResultSet.getInt("total");
+            }
+
+            countStatement.close();
+            int totalPages = (int) Math.ceil((double) totalRecords / limit);
+
+            // Construct the JSON response
+            JsonObject responseObject = new JsonObject();
+            responseObject.add("movies", resultArray);
+            responseObject.addProperty("totalRecords", totalRecords);
+            responseObject.addProperty("totalPages", totalPages);
+
+            out.write(responseObject.toString());
+
             // Set response status to 200 (OK)
             response.setStatus(200);
 
