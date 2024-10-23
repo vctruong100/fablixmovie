@@ -70,8 +70,12 @@ public class MovieListServlet extends HttpServlet {
             MovieListQuery mlQuery = new MovieListQuery(conn);
             MovieListResultProc mlrp = new MovieListResultProc(resultArray);
 
-            int limit = sessionUser.parseAndSetLimit(null);
-            int page = sessionUser.parseAndSetPage(null);
+            String limitParam = request.getParameter("limit");
+            String pageParam = request.getParameter("page");
+
+            int limit = limitParam != null ? Integer.parseInt(limitParam) : 10;
+            int page = pageParam != null ? Integer.parseInt(pageParam) : 1;
+
             int offset = limit * (page - 1);
 
             mlQuery.setLimit(limit);
@@ -132,11 +136,29 @@ public class MovieListServlet extends HttpServlet {
                     break;
             }
 
+            // Total count query
+            String countQuery = "SELECT COUNT(*) AS total FROM movies m LEFT JOIN ratings r ON m.id = r.movieId";
+            PreparedStatement countStatement = conn.prepareStatement(countQuery);
+            ResultSet countResultSet = countStatement.executeQuery();
+            int totalRecords = 0;
+            if (countResultSet.next()) {
+                totalRecords = countResultSet.getInt("total");
+            }
+            countStatement.close();
+            // Calculate total pages based on the limit
+            int totalPages = (int) Math.ceil((double) totalRecords / limit);
+
+            // Build the JSON response
+            JsonObject responseObject = new JsonObject();
+            responseObject.add("movies", resultArray);  // List of movies
+            responseObject.addProperty("totalRecords", totalRecords);  // Total number of matching records
+            responseObject.addProperty("totalPages", totalPages);  // Total pages
+
             PreparedStatement mlStatement = mlQuery.prepareStatement();
             mlrp.processResultSet(mlStatement.executeQuery());
             mlStatement.close();
             // Write JSON string to output
-            out.write(resultArray.toString());
+            out.write(responseObject.toString());
             // Set response status to 200 (OK)
             response.setStatus(200);
 

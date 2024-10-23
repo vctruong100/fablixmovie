@@ -1,3 +1,6 @@
+let currentPage = 1; // Default to the first page
+let currentLimit = 10; // Default to 10 movies per page
+let totalPages = 1;  // Default value
 
 /**
  * Handles the data returned by the API, read the jsonObject and populate data into HTML elements
@@ -10,48 +13,49 @@ function handleMovieResult(resultData) {
     // Find the element to populate the movie list
     let movieListElement = jQuery("#movie_list_body");
     movieListElement.empty();
+    totalPages = resultData.totalPages || 1;
 
-    // Iterate through resultData and populate the movie list
-    resultData.forEach(movie => {
-        let rowHTML = "<tr>";
-        rowHTML += `<td><a href="single-movie.html?id=${movie.movie_id}">${movie.movie_title}</a></td>`;
-        rowHTML += `<td>${movie.movie_year}</td>`;
-        rowHTML += `<td>${movie.movie_director}</td>`;
-        rowHTML += `<td>${movie.movie_rating}</td>`;
-        rowHTML += `<td>${movie.movie_num_votes}</td>`;
+    const movies = resultData.movies;
 
-        // Genres
-        rowHTML += "<td>";
-        movie.movie_genres.slice(0, 3).forEach((genre, index) => {
-            rowHTML += `<a href="movielist.html?genre=${genre.genre_id}">${genre.genre_name}</a>`;
-            if (index < movie.movie_genres.length - 1) rowHTML += ", ";
+    if (Array.isArray(movies)) {
+        movies.forEach(movie => {
+            let rowHTML = "<tr>";
+            rowHTML += `<td><a href="single-movie.html?id=${movie.movie_id}">${movie.movie_title}</a></td>`;
+            rowHTML += `<td>${movie.movie_year}</td>`;
+            rowHTML += `<td>${movie.movie_director}</td>`;
+            rowHTML += `<td>${movie.movie_rating}</td>`;
+            rowHTML += `<td>${movie.movie_num_votes}</td>`;
+
+            // Genres
+            rowHTML += "<td>";
+            movie.movie_genres.slice(0, 3).forEach((genre, index) => {
+                rowHTML += `<a href="movielist.html?genre=${genre.genre_id}">${genre.genre_name}</a>`;
+                if (index < movie.movie_genres.length - 1) rowHTML += ", ";
+            });
+            rowHTML += "</td>";
+
+            // Stars
+            rowHTML += "<td>";
+            movie.movie_stars.forEach((star, index) => {
+                rowHTML += `<a href="single-star.html?id=${star.star_id}">${star.star_name}</a>`;
+                if (index < movie.movie_stars.length - 1) rowHTML += ", ";
+            });
+            rowHTML += "</td>";
+
+            rowHTML += "</tr>";
+            movieListElement.append(rowHTML);
         });
-        rowHTML += "</td>";
-
-        // Stars
-        rowHTML += "<td>";
-        movie.movie_stars.forEach((star, index) => {
-            rowHTML += `<a href="single-star.html?id=${star.star_id}">${star.star_name}</a>`;
-            if (index < movie.movie_stars.length - 1) rowHTML += ", ";
-        });
-        rowHTML += "</td>";
-
-        rowHTML += "</tr>";
-        movieListElement.append(rowHTML);
-    });
+    } else {
+        console.error("Expected movies array, but received:", movies);
+    }
+    jQuery("#prev-page").prop("disabled", currentPage === 1);
+    jQuery("#next-page").prop("disabled", currentPage === totalPages);
 }
 
 // Extract query parameters from the URL for search or browsing
 function getQueryParams() {
     const params = new URLSearchParams(window.location.search);
     let queryString = "";
-
-    if (params.has("limit")) {
-        queryString += `&limit=${params.get("limit")}`;
-    }
-    if (params.has("page")) {
-        queryString += `&page=${params.get("page")}`;
-    }
     if (params.has("title")) {
         queryString += `&title=${params.get("title")}`;
     }
@@ -75,6 +79,10 @@ function getQueryParams() {
         console.log("Alpha value: " + alphaValue);  // Log the alpha value for debugging
         queryString += `&alpha=${params.get("alpha")}`;
     }
+
+    queryString += `&limit=${currentLimit}`;
+    queryString += `&page=${currentPage}`;
+
     const sortByValue = jQuery("#sort-by").val();
     if (sortByValue) {
         queryString += `&sortBy=${sortByValue}`;
@@ -84,58 +92,115 @@ function getQueryParams() {
     return queryString;
 }
 
+const updateMovieList = (queryParams) => {
+    // Determine which API to call based on queryParams
+    if (queryParams.includes("sortBy")) {
+        jQuery.ajax({
+            dataType: "json",
+            method: "GET",
+            url: `api/movie-list?${queryParams}`,
+            success: (resultData) => handleMovieResult(resultData),
+        });
+    }
+    // Case for browsing by alphabet or genre
+    else if (queryParams.includes("alpha") || queryParams.includes("genre")) {
+        jQuery.ajax({
+            dataType: "json",
+            method: "GET",
+            url: `api/browse?${queryParams}`,
+            success: (resultData) => handleMovieResult(resultData),
+        });
+    }
+    // Case for search
+    else if (queryParams.includes("title") || queryParams.includes("year") ||
+        queryParams.includes("director") || queryParams.includes("star")) {
+        jQuery.ajax({
+            dataType: "json",
+            method: "GET",
+            url: `api/search?${queryParams}`,
+            success: (resultData) => handleMovieResult(resultData),
+        });
+    }
+    // Default case for general movie listing (no search or filters applied)
+    else {
+        jQuery.ajax({
+            dataType: "json",
+            method: "GET",
+            url: `api/movie-list?${queryParams}`,
+            success: (resultData) => handleMovieResult(resultData),
+        });
+    }
+};
+
+// Handle sorting selection change
+jQuery("#sort-by").on("change", function() {
+    const queryParams = getQueryParams();
+    updateMovieList(queryParams);
+});
+
+// Handle page change
+jQuery("#prev-page").on("click", function() {
+    if (currentPage > 1) {
+        currentPage--;
+        const queryParams = getQueryParams();
+        updateMovieList(queryParams);
+        updateUrl(queryParams);
+        jQuery("#page-number").val(currentPage);
+    }
+    jQuery(this).prop("disabled", currentPage === 1);
+});
+
+jQuery("#next-page").on("click", function() {
+    currentPage++;
+    const queryParams = getQueryParams();
+    updateMovieList(queryParams);
+    updateUrl(queryParams);
+    jQuery("#page-number").val(currentPage);
+    jQuery(this).prop("disabled", currentPage === totalPages);
+});
+
+// Handle limit (movies per page) change
+jQuery("#limit-per-page").on("change", function() {
+    currentLimit = parseInt(jQuery(this).val(), 10); // Update the limit
+    currentPage = 1; // Reset to the first page when changing limit
+    jQuery("#page-number").val(currentPage); // Update the page input to display 1
+    const queryParams = getQueryParams();
+    updateMovieList(queryParams);
+    updateUrl(queryParams);
+    jQuery("#prev-page").prop("disabled", true);
+    jQuery("#next-page").prop("disabled", false);
+});
+
+// Handle page jump via input field
+jQuery("#page-number").on("change", function() {
+    let requestedPage = parseInt(jQuery(this).val(), 10);
+    if (requestedPage < 1) {
+        requestedPage = 1;
+    } else if (requestedPage > totalPages) {
+    requestedPage = totalPages;
+    }
+
+    currentPage = requestedPage;
+    jQuery(this).val(currentPage);
+
+    const queryParams = getQueryParams();
+    updateMovieList(queryParams);
+    updateUrl(queryParams);
+    jQuery("#prev-page").prop("disabled", currentPage === 1);
+    jQuery("#next-page").prop("disabled", currentPage === totalPages);
+});
+
+function updateUrl(queryParams) {
+    // Update the URL with the new query params, preserving the current state
+    const newUrl = `${window.location.pathname}?${queryParams}`;
+    window.history.pushState({ path: newUrl }, '', newUrl);
+}
+
 /**
  * Once this .js is loaded, the following scripts will be executed by the browser.
  */
 jQuery(document).ready(() => {
     const queryParams = getQueryParams();
     // placeholder4
-
-    const updateMovieList = (queryParams) => {
-        // Determine which API to call based on queryParams
-        if (queryParams.includes("sortBy")) {
-            jQuery.ajax({
-                dataType: "json",
-                method: "GET",
-                url: `api/movie-list?${queryParams}`,
-                success: (resultData) => handleMovieResult(resultData),
-            });
-        }
-        // Case for browsing by alphabet or genre
-        else if (queryParams.includes("alpha") || queryParams.includes("genre")) {
-            jQuery.ajax({
-                dataType: "json",
-                method: "GET",
-                url: `api/browse?${queryParams}`,
-                success: (resultData) => handleMovieResult(resultData),
-            });
-        }
-        // Case for search
-        else if (queryParams.includes("title") || queryParams.includes("year") ||
-            queryParams.includes("director") || queryParams.includes("star")) {
-            jQuery.ajax({
-                dataType: "json",
-                method: "GET",
-                url: `api/search?${queryParams}`,
-                success: (resultData) => handleMovieResult(resultData),
-            });
-        }
-        // Default case for general movie listing (no search or filters applied)
-        else {
-            jQuery.ajax({
-                dataType: "json",
-                method: "GET",
-                url: `api/movie-list?${queryParams}`,
-                success: (resultData) => handleMovieResult(resultData),
-            });
-        }
-    };
-
-    // Handle sorting selection change
-    jQuery("#sort-by").on("change", function() {
-        const queryParams = getQueryParams();
-        updateMovieList(queryParams);
-    });
-
     updateMovieList(queryParams);
 });

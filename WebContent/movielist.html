@@ -43,7 +43,19 @@
         <option value="rating-desc-title-desc">Rating (High to Low) & Title (Z-A)</option>
     </select>
 </div>
+<div class="pagination-controls">
+    <button id="prev-page" disabled>Previous</button>
+    <input type="number" id="page-number">
+    <button id="next-page">Next</button>
 
+    <label for="limit-per-page">Movies per page:</label>
+    <select id="limit-per-page">
+        <option value="10">10</option>
+        <option value="25">25</option>
+        <option value="50">50</option>
+        <option value="100">100</option>
+    </select>
+</div>
 <div class="container">
     <h1>Top 20 Rated Movies</h1>
 
