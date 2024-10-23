@@ -1,7 +1,5 @@
 package query;
 
-import java.sql.Connection;
-
 /*
  * Collects stars associated with a movie id and orders the results
  * by how prolific a star is and their names

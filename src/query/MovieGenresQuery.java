@@ -1,7 +1,5 @@
 package query;
 
-import java.sql.Connection;
-
 /*
  * Collects genres associated with a movie id and orders the results
  * by the genre name

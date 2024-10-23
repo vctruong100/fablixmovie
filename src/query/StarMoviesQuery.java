@@ -1,7 +1,5 @@
 package query;
 
-import java.sql.Connection;
-
 /*
  * Collects movies associated with a star id and orders the results
  * by latest movie year and title

@@ -1,9 +1,5 @@
 package query;
 
-import java.sql.SQLException;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-
 /*
  * Collects a paginated list of movies with optional conditions
  * on its fields and orders rows by either its title/rating or its rating/title
