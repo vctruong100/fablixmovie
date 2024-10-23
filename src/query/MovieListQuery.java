@@ -35,8 +35,10 @@ public class MovieListQuery extends BaseQuery {
     public MovieListQuery(Connection conn) {
         super(conn);
         builder = new StringBuilder(
-                "SELECT m.*, IFNULL(r.rating, 0) 'r.rating', IFNULL(r.numVotes, 0) 'r.numVotes' " +
-                "FROM movies m LEFT JOIN ratings r ON m.id = r.movieId");
+                "SELECT m.*, IFNULL(r.rating, 0) 'r.rating', "
+                + "IFNULL(r.numVotes, 0) 'r.numVotes', p.price, "
+                + "FROM movies m LEFT JOIN ratings r ON m.id = r.movieId "
+                + "LEFT JOIN prices p ON m.id = p.movieId");
         params = new String[6]; /* upper bound based on the final query string */
         paramCount = 0;
 
@@ -115,7 +117,6 @@ public class MovieListQuery extends BaseQuery {
         builder.append(order[0]);
         builder.append(", ");
         builder.append(order[1]);
-        System.out.println("Executing query with ORDER BY: " + builder.toString());
 
         if (limit > 0) {
             builder.append(" LIMIT ");
@@ -127,11 +128,11 @@ public class MovieListQuery extends BaseQuery {
         }
 
         queryString = builder.toString();
-        System.out.println("Executing query: " + builder.toString());
         statement = conn.prepareStatement(queryString);
         for (int i = 0; i < paramCount; i++) {
             statement.setString(i + 1, params[i]);
         }
+        System.out.println("MovieListQuery: " + statement);
         return statement;
     }
 
@@ -140,6 +141,7 @@ public class MovieListQuery extends BaseQuery {
      * these fields shall be trimmed in case the user includes
      * leading/trailing whitespace (or just spaces)
      */
+
     public void setTitle(String title) {
         this.title = title != null ? title.trim() : null;
     }
@@ -175,14 +177,10 @@ public class MovieListQuery extends BaseQuery {
     public void orderByTitleRating(OrderMode titleMode, OrderMode ratingMode) {
         this.order[0] = "m.title " + (titleMode == OrderMode.ASC ? "ASC" : "DESC");
         this.order[1] = "r.rating " + (ratingMode == OrderMode.ASC ? "ASC" : "DESC");
-        System.out.println("Ordering by title and rating: " + this.order[0] + ", " + this.order[1]);
-
     }
 
     public void orderByRatingTitle(OrderMode ratingMode, OrderMode titleMode) {
         this.order[0] = "r.rating " + (ratingMode == OrderMode.ASC ? "ASC" : "DESC");
         this.order[1] = "m.title " + (titleMode == OrderMode.ASC ? "ASC" : "DESC");
-        System.out.println("Ordering by rating and title: " + this.order[0] + ", " + this.order[1]);
-
     }
 }

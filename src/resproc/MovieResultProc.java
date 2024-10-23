@@ -38,6 +38,7 @@ public class MovieResultProc extends BaseResultProc {
             String movieDirector = rs.getString("m.director");
             String movieRating = rs.getString("r.rating");
             String movieNumVotes = rs.getString("r.numVotes");
+            String moviePrice = rs.getString("p.price");
 
             /* process genres */
             MovieGenresQuery mgQuery = new MovieGenresQuery(
@@ -68,6 +69,7 @@ public class MovieResultProc extends BaseResultProc {
             result.addProperty("movie_director", movieDirector);
             result.addProperty("movie_rating", movieRating);
             result.addProperty("movie_num_votes", movieNumVotes);
+            result.addProperty("movie_price", moviePrice);
             result.add("movie_genres", genres);
             result.add("movie_stars", stars);
 

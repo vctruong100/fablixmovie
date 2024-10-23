@@ -18,9 +18,10 @@ public class MovieQuery extends BaseQuery {
 
     public PreparedStatement prepareStatement() throws SQLException {
         String queryString =
-                "SELECT m.*, IFNULL(r.rating, 0) 'r.rating', IFNULL(r.numVotes, 0) 'r.numVotes' " +
-                "FROM movies m LEFT JOIN ratings r ON m.id = r.movieId " +
-                "WHERE m.id = ?";
+                "SELECT m.*, IFNULL(r.rating, 0) 'r.rating', "
+                + "IFNULL(r.numVotes, 0) 'r.numVotes', p.price "
+                + "FROM movies m LEFT JOIN ratings r ON m.id = r.movieId "
+                + "LEFT JOIN prices p ON m.id = r.movieId WHERE m.id = ?";
         PreparedStatement statement = conn.prepareStatement(queryString);
         statement.setString(1, movieId);
         return statement;
