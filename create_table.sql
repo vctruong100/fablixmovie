@@ -70,9 +70,16 @@ CREATE TABLE IF NOT EXISTS sales(
 );
 
 -- create ratings table
-CREATE TABLE ratings(
+CREATE TABLE IF NOT EXISTS ratings(
 	movieId varchar(10) not null,
 	rating float not null,
 	numVotes integer not null,
+	foreign key(movieId) references movies(id)
+);
+
+-- create prices table
+CREATE TABLE IF NOT EXISTS prices(
+	movieId varchar(10) not null,
+	price decimal(5,2) not null,
 	foreign key(movieId) references movies(id)
 );
