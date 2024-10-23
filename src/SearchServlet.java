@@ -72,7 +72,7 @@ public class SearchServlet extends HttpServlet {
             int offset = limit * (page - 1);
 
 
-            MovieListQuery mlQuery = new MovieListQuery(conn);
+            MovieListQuery mlQuery = new MovieListQuery();
             MovieListResultProc mlrp = new MovieListResultProc(resultArray);
 
             if (sortBy != null) {
@@ -114,7 +114,7 @@ public class SearchServlet extends HttpServlet {
             mlQuery.setLimit(limit);
             mlQuery.setOffset(offset);
 
-            PreparedStatement mlStatement = mlQuery.prepareStatement();
+            PreparedStatement mlStatement = mlQuery.prepareStatement(conn);
             mlrp.processResultSet(mlStatement.executeQuery());
             mlStatement.close();
 

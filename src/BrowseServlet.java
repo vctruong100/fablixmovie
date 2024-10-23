@@ -63,7 +63,7 @@ public class BrowseServlet extends HttpServlet {
         PrintWriter out = response.getWriter();
         try (Connection conn = dataSource.getConnection()) {
             JsonArray resultArray = new JsonArray();
-            MovieListQuery mlQuery = new MovieListQuery(conn);
+            MovieListQuery mlQuery = new MovieListQuery();
             MovieListResultProc mlrp = new MovieListResultProc(resultArray);
 
             int limit = sessionUser.parseAndSetLimit(limitString);
@@ -119,7 +119,7 @@ public class BrowseServlet extends HttpServlet {
             mlQuery.setLimit(limit);
             mlQuery.setOffset(offset);
 
-            PreparedStatement mlStatement = mlQuery.prepareStatement();
+            PreparedStatement mlStatement = mlQuery.prepareStatement(conn);
             mlrp.processResultSet(mlStatement.executeQuery());
             mlStatement.close();
 

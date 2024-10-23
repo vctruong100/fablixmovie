@@ -34,13 +34,13 @@ public class StarResultProc extends BaseResultProc {
             String starBirthYear = rs.getString("s.birthYear");
 
             /* process movies */
-            StarMoviesQuery smQuery = new StarMoviesQuery(
-                    rs.getStatement().getConnection(), starId);
+            StarMoviesQuery smQuery = new StarMoviesQuery(starId);
             if (movieLimit > 0) {
                 smQuery.setLimit(movieLimit);
             }
 
-            PreparedStatement smStatement = smQuery.prepareStatement();
+            PreparedStatement smStatement = smQuery.prepareStatement(
+                    rs.getStatement().getConnection());
             smrp.processResultSet(smStatement.executeQuery());
             smStatement.close();
 

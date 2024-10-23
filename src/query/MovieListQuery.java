@@ -32,8 +32,7 @@ public class MovieListQuery extends BaseQuery {
     private String alpha;
     private String genreId;
 
-    public MovieListQuery(Connection conn) {
-        super(conn);
+    public MovieListQuery() {
         builder = new StringBuilder(
                 "SELECT m.*, IFNULL(r.rating, 0) 'r.rating', "
                 + "IFNULL(r.numVotes, 0) 'r.numVotes', p.price, "
@@ -57,7 +56,8 @@ public class MovieListQuery extends BaseQuery {
         orderByRatingTitle(OrderMode.DESC, OrderMode.ASC);
     }
 
-    public PreparedStatement prepareStatement() throws SQLException {
+    public PreparedStatement prepareStatement(Connection conn)
+            throws SQLException {
         String queryString;
         PreparedStatement statement;
         ArrayList<String> joinClauses = new ArrayList<>();

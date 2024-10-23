@@ -12,13 +12,13 @@ abstract class GroupingQuery extends BaseQuery {
     private final String kindId;
     private int limit;
 
-    public GroupingQuery(Connection conn, String kindId) {
-        super(conn);
+    public GroupingQuery(String kindId) {
         this.kindId = kindId;
         builder = new StringBuilder();
     }
 
-    public PreparedStatement prepareStatement() throws SQLException {
+    public final PreparedStatement prepareStatement(Connection conn)
+            throws SQLException {
         String queryString;
         PreparedStatement statement;
 
@@ -33,7 +33,7 @@ abstract class GroupingQuery extends BaseQuery {
         return statement;
     }
 
-    public void setLimit(int limit) {
+    public final void setLimit(int limit) {
         this.limit = limit;
     }
 }

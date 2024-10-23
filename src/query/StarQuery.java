@@ -11,14 +11,14 @@ import java.sql.PreparedStatement;
 public class StarQuery extends BaseQuery {
     private final String starId;
 
-    public StarQuery(Connection conn, String starId) {
-        super(conn);
+    public StarQuery(String starId) {
         this.starId = starId;
     }
 
-    public PreparedStatement prepareStatement() throws SQLException {
-        String queryString = "SELECT s.id, s.name, s.birthYear FROM stars s " +
-                "WHERE s.id = ?";
+    public PreparedStatement prepareStatement(Connection conn)
+            throws SQLException {
+        String queryString = "SELECT s.id, s.name, s.birthYear FROM stars s "
+                + "WHERE s.id = ?";
         PreparedStatement statement = conn.prepareStatement(queryString);
         statement.setString(1, starId);
         return statement;

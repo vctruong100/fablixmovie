@@ -67,7 +67,7 @@ public class MovieListServlet extends HttpServlet {
         try (Connection conn = dataSource.getConnection()) {
             // Get a connection from dataSource
             JsonArray resultArray = new JsonArray();
-            MovieListQuery mlQuery = new MovieListQuery(conn);
+            MovieListQuery mlQuery = new MovieListQuery();
             MovieListResultProc mlrp = new MovieListResultProc(resultArray);
 
             String limitParam = request.getParameter("limit");
@@ -152,7 +152,7 @@ public class MovieListServlet extends HttpServlet {
             responseObject.addProperty("totalRecords", totalRecords);
             responseObject.addProperty("totalPages", totalPages);
 
-            PreparedStatement mlStatement = mlQuery.prepareStatement();
+            PreparedStatement mlStatement = mlQuery.prepareStatement(conn);
             mlrp.processResultSet(mlStatement.executeQuery());
             mlStatement.close();
 

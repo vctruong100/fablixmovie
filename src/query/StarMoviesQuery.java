@@ -7,11 +7,11 @@ import java.sql.Connection;
  * by latest movie year and title
  */
 public class StarMoviesQuery extends GroupingQuery {
-    public StarMoviesQuery(Connection conn, String starId) {
-        super(conn, starId);
+    public StarMoviesQuery(String starId) {
+        super(starId);
         builder.append(
-            "SELECT * FROM stars_in_movies sim, movies m " +
-            "WHERE sim.movieId = m.id AND sim.starId = ? " +
-            "ORDER BY m.year DESC, m.title ASC");
+            "SELECT * FROM stars_in_movies sim, movies m "
+            + "WHERE sim.movieId = m.id AND sim.starId = ? "
+            + "ORDER BY m.year DESC, m.title ASC");
     }
 }

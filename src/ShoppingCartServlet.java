@@ -58,8 +58,8 @@ public class ShoppingCartServlet extends HttpServlet {
                     int movieId = entry.getKey();
                     SessionUser.CartItem cartItem = entry.getValue();
 
-                    MovieQuery movieQuery = new MovieQuery(conn, String.valueOf(movieId));
-                    try (PreparedStatement statement = movieQuery.prepareStatement();
+                    MovieQuery movieQuery = new MovieQuery(String.valueOf(movieId));
+                    try (PreparedStatement statement = movieQuery.prepareStatement(conn);
                          ResultSet rs = statement.executeQuery()) {
 
                         if (rs.next()) {

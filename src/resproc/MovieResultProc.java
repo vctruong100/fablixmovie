@@ -41,24 +41,24 @@ public class MovieResultProc extends BaseResultProc {
             String moviePrice = rs.getString("p.price");
 
             /* process genres */
-            MovieGenresQuery mgQuery = new MovieGenresQuery(
-                    rs.getStatement().getConnection(), movieId);
+            MovieGenresQuery mgQuery = new MovieGenresQuery(movieId);
             if (genreLimit > 0) {
                 mgQuery.setLimit(genreLimit);
             }
 
-            PreparedStatement mgStatement = mgQuery.prepareStatement();
+            PreparedStatement mgStatement = mgQuery.prepareStatement(
+                    rs.getStatement().getConnection());
             mgrp.processResultSet(mgStatement.executeQuery());
             mgStatement.close();
 
             /* process stars */
-            MovieStarsQuery msQuery = new MovieStarsQuery(
-                    rs.getStatement().getConnection(), movieId);
+            MovieStarsQuery msQuery = new MovieStarsQuery(movieId);
             if (starLimit > 0) {
                 msQuery.setLimit(starLimit);
             }
 
-            PreparedStatement msStatement = msQuery.prepareStatement();
+            PreparedStatement msStatement = msQuery.prepareStatement(
+                    rs.getStatement().getConnection());
             msrp.processResultSet(msStatement.executeQuery());
             msStatement.close();
 

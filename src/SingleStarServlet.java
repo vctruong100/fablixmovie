@@ -64,9 +64,9 @@ public class SingleStarServlet extends HttpServlet {
              */
             JsonObject star = new JsonObject();
             StarResultProc srp = new StarResultProc(star);
-            StarQuery sQuery = new StarQuery(conn, id);
+            StarQuery sQuery = new StarQuery(id);
 
-            PreparedStatement sStatement = sQuery.prepareStatement();
+            PreparedStatement sStatement = sQuery.prepareStatement(conn);
             srp.processResultSet(sStatement.executeQuery());
             sStatement.close();
 

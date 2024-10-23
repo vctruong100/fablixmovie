@@ -11,12 +11,12 @@ import java.sql.PreparedStatement;
 public class MovieQuery extends BaseQuery {
     private final String movieId;
 
-    public MovieQuery(Connection conn, String movieId) {
-        super(conn);
+    public MovieQuery(String movieId) {
         this.movieId = movieId;
     }
 
-    public PreparedStatement prepareStatement() throws SQLException {
+    public PreparedStatement prepareStatement(Connection conn)
+            throws SQLException {
         String queryString =
                 "SELECT m.*, IFNULL(r.rating, 0) 'r.rating', "
                 + "IFNULL(r.numVotes, 0) 'r.numVotes', p.price "

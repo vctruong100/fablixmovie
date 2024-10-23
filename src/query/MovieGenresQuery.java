@@ -7,11 +7,11 @@ import java.sql.Connection;
  * by the genre name
  */
 public class MovieGenresQuery extends GroupingQuery {
-    public MovieGenresQuery(Connection conn, String movieId) {
-        super(conn, movieId);
+    public MovieGenresQuery(String movieId) {
+        super(movieId);
         builder.append(
-                "SELECT * FROM genres_in_movies gim, genres g " +
-                "WHERE gim.genreId = g.id AND gim.movieId = ? " +
-                "ORDER BY g.name ASC");
+                "SELECT * FROM genres_in_movies gim, genres g "
+                + "WHERE gim.genreId = g.id AND gim.movieId = ? "
+                + "ORDER BY g.name ASC");
     }
 }
