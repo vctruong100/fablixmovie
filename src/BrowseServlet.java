@@ -126,11 +126,7 @@ public class BrowseServlet extends HttpServlet {
             String countQuery = "SELECT COUNT(*) AS total FROM movies m LEFT JOIN ratings r ON m.id = r.movieId WHERE 1=1";
 
             if (alpha != null && !alpha.isEmpty()) {
-                if (alpha.equals("*")) {
-                    countQuery += " AND m.title REGEXP '^[^A-Za-z0-9]'";
-                } else {
-                    countQuery += " AND m.title LIKE ?";
-                }
+                countQuery += " AND m.title LIKE ?";
             } else if (genreId != null && !genreId.isEmpty()) {
                 countQuery += " AND EXISTS (SELECT 1 FROM genres_in_movies gim WHERE gim.genreId = ? AND gim.movieId = m.id)";
             }
