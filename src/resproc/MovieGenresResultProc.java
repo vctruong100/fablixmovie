@@ -29,6 +29,6 @@ public class MovieGenresResultProc extends BaseResultProc {
 
             result.add(genre);
         }
-        return true;
+        return !result.isEmpty();
     }
 }

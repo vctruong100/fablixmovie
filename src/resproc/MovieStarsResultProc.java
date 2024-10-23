@@ -33,6 +33,6 @@ public class MovieStarsResultProc extends BaseResultProc {
 
             result.add(star);
         }
-        return true;
+        return !result.isEmpty();
     }
 }

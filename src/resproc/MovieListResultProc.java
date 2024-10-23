@@ -29,6 +29,6 @@ public class MovieListResultProc extends BaseResultProc {
                 break; // no more movies to process
             }
         }
-        return true;
+        return !result.isEmpty();
     }
 }
