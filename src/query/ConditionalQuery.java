@@ -147,7 +147,7 @@ abstract class ConditionalQuery extends BaseQuery {
     private void buildSelectClauses() {
         builder.append(" SELECT ");
         for (String clause : selectClauses.subList(
-                0, selectClauses.size())) {
+                0, selectClauses.size() - 1)) {
             builder.append(clause);
             builder.append(", ");
         }
@@ -174,7 +174,7 @@ abstract class ConditionalQuery extends BaseQuery {
     private void buildWhereClauses() {
         builder.append(" WHERE ");
         for (String clause : whereClauses.subList(
-                0, whereClauses.size())) {
+                0, whereClauses.size() - 1)) {
             builder.append("(");
             builder.append(clause);
             builder.append(") AND ");
