@@ -54,8 +54,6 @@ function handleMovieResult(resultData) {
         currentGenre = backFormParams.genre;
     }
 
-    clearBackFormParams();
-
     // Total number of movies found for this search result only
     // Does not count ALL movies
     let count = parseInt(resultData.count);
@@ -96,10 +94,11 @@ function handleMovieResult(resultData) {
     }
     jQuery("#prev-page").prop("disabled", currentPage === 1);
     jQuery("#next-page").prop("disabled", currentPage === totalPages);
-
-    storeCurrentState();
-
 }
+
+jQuery(document).on("click", "a", function() {
+    storeCurrentState();
+});
 
 function storeCurrentState() {
     const state = {
@@ -273,17 +272,6 @@ jQuery("#page-number").on("change", function() {
     jQuery("#prev-page").prop("disabled", currentPage === 1);
     jQuery("#next-page").prop("disabled", currentPage === totalPages);
 });
-
-function clearBackFormParams() {
-    // Reset all the params to null or initial values
-    currentAlpha = null;
-    currentGenre = null;
-    currentTitle = null;
-    currentYear = null;
-    currentDirector = null;
-    currentStar = null;
-    console.log("Cleared backFormParams");
-}
 
 function updateUrl(queryParams) {
     // Update the URL with the new query params, preserving the current state
