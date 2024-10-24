@@ -1,4 +1,3 @@
-// TODO: properly implement jump without making any changes to the backend
 
 /*
  * NOTE: These values do not persist across pages, but
@@ -55,6 +54,8 @@ function handleMovieResult(resultData) {
         currentGenre = backFormParams.genre;
     }
 
+    clearBackFormParams();
+
     // Total number of movies found for this search result only
     // Does not count ALL movies
     let count = parseInt(resultData.count);
@@ -95,8 +96,46 @@ function handleMovieResult(resultData) {
     }
     jQuery("#prev-page").prop("disabled", currentPage === 1);
     jQuery("#next-page").prop("disabled", currentPage === totalPages);
+
+    storeCurrentState();
+
 }
 
+function storeCurrentState() {
+    const state = {
+        currentPage: currentPage,
+        currentLimit: currentLimit,
+        currentSortBy: currentSortBy,
+        currentTitle: currentTitle,
+        currentYear: currentYear,
+        currentDirector: currentDirector,
+        currentStar: currentStar,
+        currentAlpha: currentAlpha,
+        currentGenre: currentGenre,
+    };
+    sessionStorage.setItem("movieListState", JSON.stringify(state));
+}
+
+function restoreState() {
+    const savedState = sessionStorage.getItem("movieListState");
+    if (savedState) {
+        const state = JSON.parse(savedState);
+        currentPage = state.currentPage || 1;
+        currentLimit = state.currentLimit || 10;
+        currentSortBy = state.currentSortBy || "title-asc-rating-asc";
+        currentTitle = state.currentTitle || "";
+        currentYear = state.currentYear || "";
+        currentDirector = state.currentDirector || "";
+        currentStar = state.currentStar || "";
+        currentAlpha = state.currentAlpha || "";
+        currentGenre = state.currentGenre || "";
+
+        // Update the UI with the restored state
+        jQuery("#page-number").val(currentPage);
+        jQuery("#limit-per-page").val(currentLimit);
+        jQuery("#sort-by").val(currentSortBy);
+    }
+}
 // Extract query parameters from the URL for search or browsing
 function getQueryParams() {
     const params = new URLSearchParams(window.location.search);
@@ -235,6 +274,17 @@ jQuery("#page-number").on("change", function() {
     jQuery("#next-page").prop("disabled", currentPage === totalPages);
 });
 
+function clearBackFormParams() {
+    // Reset all the params to null or initial values
+    currentAlpha = null;
+    currentGenre = null;
+    currentTitle = null;
+    currentYear = null;
+    currentDirector = null;
+    currentStar = null;
+    console.log("Cleared backFormParams");
+}
+
 function updateUrl(queryParams) {
     // Update the URL with the new query params, preserving the current state
     const newUrl = `${window.location.pathname}?${queryParams}`;
@@ -245,6 +295,7 @@ function updateUrl(queryParams) {
  * Once this .js is loaded, the following scripts will be executed by the browser.
  */
 jQuery(document).ready(() => {
+    restoreState();
     const queryParams = getQueryParams();
     console.log("Initial queryParams: ", queryParams);
     updateMovieList(queryParams);
