@@ -143,6 +143,8 @@ abstract class ConditionalQuery extends BaseQuery {
     /*
      * This shall be called first when preparing
      * a base statement (no limit / offset)
+     *
+     * At least 1 select clause is required to be defined
      */
     private void buildSelectClauses() {
         builder.append(" SELECT ");
@@ -158,6 +160,8 @@ abstract class ConditionalQuery extends BaseQuery {
     /*
      * This shall be called immediately
      * after select clauses or count are appended
+     *
+     * At least 1 join clause is required to be defined
      */
     private void buildJoinClauses() {
         builder.append(" FROM ");
@@ -170,19 +174,24 @@ abstract class ConditionalQuery extends BaseQuery {
     /*
      * This shall be called immediately
      * after join clauses are appended
+     *
+     * Where clauses are optional but a lack of
+     * could lead to suboptimal queries
      */
     private void buildWhereClauses() {
-        builder.append(" WHERE ");
-        for (String clause : whereClauses.subList(
-                0, whereClauses.size() - 1)) {
+        if (!whereClauses.isEmpty()) {
+            builder.append(" WHERE ");
+            for (String clause : whereClauses.subList(
+                    0, whereClauses.size() - 1)) {
+                builder.append("(");
+                builder.append(clause);
+                builder.append(") AND ");
+            }
             builder.append("(");
-            builder.append(clause);
-            builder.append(") AND ");
+            builder.append(whereClauses.get(
+                    whereClauses.size() - 1));
+            builder.append(")");
         }
-        builder.append("(");
-        builder.append(whereClauses.get(
-                whereClauses.size() - 1));
-        builder.append(")");
     }
 
     /*
