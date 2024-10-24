@@ -279,6 +279,21 @@ function updateUrl(queryParams) {
     window.history.pushState({ path: newUrl }, '', newUrl);
 }
 
+$(document).on('click', '.add-to-cart', function() {
+    let movieId = $(this).data('id');
+    $.ajax({
+        url: "api/shoppingcart",
+        method: "POST",
+        data: { movieId: movieId, action: "add" },
+        success: function() {
+            alert("Added to cart successfully!");
+        },
+        error: function() {
+            alert("Failed to add to cart.");
+        }
+    });
+});
+
 /**
  * Once this .js is loaded, the following scripts will be executed by the browser.
  */
