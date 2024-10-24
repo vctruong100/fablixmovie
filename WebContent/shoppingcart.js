@@ -66,7 +66,18 @@ jQuery("#results-btn").on("click", function(event) {
     if (movieListState) {
         const state = JSON.parse(movieListState);
         queryParams = `&limit=${state.currentLimit}&page=${state.currentPage}&sortBy=${state.currentSortBy}`;
-
+        if (state.currentTitle) {
+            queryParams += `&title=${state.currentTitle}`;
+        }
+        if (state.currentYear) {
+            queryParams += `&year=${state.currentYear}`;
+        }
+        if (state.currentDirector) {
+            queryParams += `&director=${state.currentDirector}`;
+        }
+        if (state.currentStar) {
+            queryParams += `&star=${state.currentStar}`;
+        }
         if (state.currentAlpha) {
             queryParams += `&alpha=${state.currentAlpha}`;
         }
