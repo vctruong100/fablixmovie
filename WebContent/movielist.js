@@ -105,8 +105,8 @@ function getQueryParams() {
 
 const updateMovieList = (queryParams) => {
     // Determine which API to call based on queryParams
-    if (queryParams.includes("title") || queryParams.includes("year") ||
-        queryParams.includes("director") || queryParams.includes("star")) {
+    if (queryParams.includes("&title") || queryParams.includes("&year") ||
+        queryParams.includes("&director") || queryParams.includes("&star")) {
         // Case for search
         jQuery.ajax({
             dataType: "json",
@@ -116,7 +116,7 @@ const updateMovieList = (queryParams) => {
         });
     }
     // Case for browsing by alphabet or genre
-    else if (queryParams.includes("alpha") || queryParams.includes("genre")) {
+    else if (queryParams.includes("&alpha") || queryParams.includes("&genre")) {
         jQuery.ajax({
             dataType: "json",
             method: "GET",
