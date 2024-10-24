@@ -13,9 +13,20 @@ function handleMovieResult(resultData) {
     // Find the element to populate the movie list
     let movieListElement = jQuery("#movie_list_body");
     movieListElement.empty();
-    totalPages = resultData.totalPages || 1;
 
-    let movies = resultData.movies;
+    // List of parameters used to retrieve the result
+    // Parameter fields are dependent on whether search query mode was search or browse by genre
+    // Maybe this can be used to restore the page with the query info?
+    let backFormParams = resultData.params;
+    console.log("back form params");
+    console.log(backFormParams);
+
+    // Total number of movies found for this search result only
+    // Does not count ALL movies
+    let count = parseInt(resultData.count);
+    totalPages = Math.ceil(count / currentLimit) || 1
+
+    let movies = resultData.results;
 
     if (Array.isArray(movies)) {
         movies.forEach(movie => {

@@ -1,3 +1,5 @@
+import com.google.gson.JsonObject;
+
 import java.util.Map;
 import java.util.HashMap;
 
@@ -5,8 +7,20 @@ public class SessionUser {
     public enum QueryMode {
         NONE, SEARCH, BROWSE
     }
+    public enum SortCategory {
+        RATING_ASC_TITLE_ASC,
+        RATING_ASC_TITLE_DESC,
+        RATING_DESC_TITLE_ASC,
+        RATING_DESC_TITLE_DESC,
+        TITLE_ASC_RATING_ASC,
+        TITLE_ASC_RATING_DESC,
+        TITLE_DESC_RATING_ASC,
+        TITLE_DESC_RATING_DESC,
+    }
+
     private static class UserQuery {
         public QueryMode mode = QueryMode.NONE;
+        public SortCategory sortCategory;
         public int limit = 10;
         public int page = 1;
 
@@ -53,14 +67,6 @@ public class SessionUser {
         };
     }
 
-    public void setLimitParameter(int limit) {
-        userQuery.limit = limit;
-    }
-
-    public void setPageParameter(int page) {
-        userQuery.page = page;
-    }
-
     public void setBrowseParameters(String alpha, String genreId) {
         userQuery.mode = QueryMode.BROWSE;
         userQuery.alpha = alpha;
@@ -76,7 +82,8 @@ public class SessionUser {
         userQuery.star = star;
     }
 
-    public int parseAndSetLimit(String limitString) throws IllegalArgumentException {
+    public int getSetLimit(String limitString)
+            throws IllegalArgumentException {
         if (limitString == null || limitString.isEmpty()) {
             return userQuery.limit;
         } else {
@@ -94,7 +101,8 @@ public class SessionUser {
         }
     }
 
-    public int parseAndSetPage(String pageString) throws IllegalArgumentException {
+    public int getSetPage(String pageString)
+            throws IllegalArgumentException {
         if (pageString == null || pageString.isEmpty()) {
             return userQuery.page;
         } else {
@@ -109,6 +117,50 @@ public class SessionUser {
             }
             userQuery.page = page;
             return page;
+        }
+    }
+
+    public SortCategory getSetSortCategory(String sortCatString)
+            throws IllegalArgumentException {
+        if (sortCatString == null || sortCatString.isEmpty()) {
+            return userQuery.sortCategory;
+        } else {
+            SortCategory sortCat;
+            try {
+                sortCat = SortCategory.valueOf(
+                        sortCatString.replace("-", "_").toUpperCase()
+                );
+            } catch (Exception e) {
+                throw new IllegalArgumentException("invalid sort category");
+            }
+            userQuery.sortCategory = sortCat;
+            return sortCat;
+        }
+    }
+
+    public void backFormParameters(JsonObject whereToStore) {
+        String limitString = Integer.toString(userQuery.limit);
+        String pageString = Integer.toString(userQuery.page);
+        String sortCatString = userQuery.sortCategory.name()
+                .toLowerCase().replace("_", "-");
+
+        whereToStore.addProperty("limit", limitString);
+        whereToStore.addProperty("page", pageString);
+        whereToStore.addProperty("sortBy", sortCatString);
+
+        switch(userQuery.mode) {
+            case SEARCH:
+                whereToStore.addProperty("title", userQuery.title);
+                whereToStore.addProperty("year", userQuery.year);
+                whereToStore.addProperty("director", userQuery.director);
+                whereToStore.addProperty("star", userQuery.star);
+                break;
+            case BROWSE:
+                whereToStore.addProperty("alpha", userQuery.alpha);
+                whereToStore.addProperty("genreId", userQuery.genreId);
+                break;
+            default:
+                break;
         }
     }
 

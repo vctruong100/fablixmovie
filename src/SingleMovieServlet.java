@@ -62,9 +62,9 @@ public class SingleMovieServlet extends HttpServlet {
              */
             JsonObject movie = new JsonObject();
             MovieResultProc mrp = new MovieResultProc(movie);
-            MovieQuery mQuery = new MovieQuery(conn, id);
+            MovieQuery mQuery = new MovieQuery(id);
 
-            PreparedStatement mStatement = mQuery.prepareStatement();
+            PreparedStatement mStatement = mQuery.prepareStatement(conn);
             mrp.processResultSet(mStatement.executeQuery());
             mStatement.close();
 

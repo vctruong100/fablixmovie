@@ -4,13 +4,13 @@ import com.google.gson.JsonObject;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
 
-import com.mysql.cj.Session;
 import jakarta.servlet.ServletConfig;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import query.MovieListQuery;
+import resproc.CountResultProc;
 import resproc.MovieListResultProc;
 
 import javax.sql.DataSource;
@@ -43,20 +43,20 @@ public class MovieListServlet extends HttpServlet {
         response.setCharacterEncoding("UTF-8");
         response.setContentType("application/json"); // Response mime type
 
-        // Log all query parameters
-        System.out.println("Query Parameters:");
-        request.getParameterMap().forEach((key, value) -> {
-            System.out.println(key + ": " + String.join(", ", value));
-        });
-
-
-        String sortBy = request.getParameter("sortBy");
-        System.out.println("Received sortBy parameter: " + sortBy);
         /*
          * This api service shall only be used to retrieve
-         * search results using parameters from the HttpSession
+         * search results using parameters from the HttpSession.
+         * In other words, this is a PARAMETERLESS API service!
          *
-         * For parameterized queries, use the search/browse APIs.
+         *
+         * For parameterized queries, please use the search/browse APIs
+         * in combination with this service
+         *
+         * @response {
+         *   params: {...}      // back formation of query params
+         *   results: {...},    // search results
+         *   count: string,     // converted from an integer
+         * }
          */
         SessionUser sessionUser = (SessionUser)request.getSession().getAttribute("user");
 
@@ -65,54 +65,64 @@ public class MovieListServlet extends HttpServlet {
 
         // Get a connection from dataSource and let resource manager close the connection after usage.
         try (Connection conn = dataSource.getConnection()) {
-            // Get a connection from dataSource
+            JsonObject responseObject = new JsonObject();
+            JsonObject paramsObject = new JsonObject();
             JsonArray resultArray = new JsonArray();
+
             MovieListQuery mlQuery = new MovieListQuery();
             MovieListResultProc mlrp = new MovieListResultProc(resultArray);
+            CountResultProc crp = new CountResultProc(responseObject);
 
-            String limitParam = request.getParameter("limit");
-            String pageParam = request.getParameter("page");
-
-            int limit = limitParam != null ? Integer.parseInt(limitParam) : 10;
-            int page = pageParam != null ? Integer.parseInt(pageParam) : 1;
-
+            int limit = sessionUser.getSetLimit(null);
+            int page = sessionUser.getSetPage(null);
             int offset = limit * (page - 1);
 
             mlQuery.setLimit(limit);
             mlQuery.setOffset(offset);
 
-            if (sortBy != null) {
-                switch (sortBy) {
-                    case "title-asc-rating-asc":
-                        mlQuery.orderByTitleRating(MovieListQuery.OrderMode.ASC, MovieListQuery.OrderMode.ASC);
-                        break;
-                    case "title-asc-rating-desc":
-                        mlQuery.orderByTitleRating(MovieListQuery.OrderMode.ASC, MovieListQuery.OrderMode.DESC);
-                        break;
-                    case "title-desc-rating-asc":
-                        mlQuery.orderByTitleRating(MovieListQuery.OrderMode.DESC, MovieListQuery.OrderMode.ASC);
-                        break;
-                    case "title-desc-rating-desc":
-                        mlQuery.orderByTitleRating(MovieListQuery.OrderMode.DESC, MovieListQuery.OrderMode.DESC);
-                        break;
-                    case "rating-asc-title-asc":
-                        mlQuery.orderByRatingTitle(MovieListQuery.OrderMode.ASC, MovieListQuery.OrderMode.ASC);
-                        break;
-                    case "rating-asc-title-desc":
-                        mlQuery.orderByRatingTitle(MovieListQuery.OrderMode.ASC, MovieListQuery.OrderMode.DESC);
-                        break;
-                    case "rating-desc-title-asc":
-                        mlQuery.orderByRatingTitle(MovieListQuery.OrderMode.DESC, MovieListQuery.OrderMode.ASC);
-                        break;
-                    case "rating-desc-title-desc":
-                        mlQuery.orderByRatingTitle(MovieListQuery.OrderMode.DESC, MovieListQuery.OrderMode.DESC);
-                        break;
-                    default:
-                        mlQuery.orderByRatingTitle(MovieListQuery.OrderMode.DESC, MovieListQuery.OrderMode.ASC);
-                        break;
-                }
+            switch(sessionUser.getSetSortCategory(null)) {
+                case RATING_ASC_TITLE_ASC:
+                    mlQuery.orderByRatingTitle(
+                            MovieListQuery.OrderMode.ASC, MovieListQuery.OrderMode.ASC
+                    );
+                    break;
+                case RATING_ASC_TITLE_DESC:
+                    mlQuery.orderByRatingTitle(
+                            MovieListQuery.OrderMode.ASC, MovieListQuery.OrderMode.DESC
+                    );
+                    break;
+                case RATING_DESC_TITLE_DESC:
+                    mlQuery.orderByRatingTitle(
+                            MovieListQuery.OrderMode.DESC, MovieListQuery.OrderMode.DESC
+                    );
+                    break;
+                case TITLE_ASC_RATING_ASC:
+                    mlQuery.orderByTitleRating(
+                            MovieListQuery.OrderMode.ASC, MovieListQuery.OrderMode.ASC
+                    );
+                    break;
+                case TITLE_ASC_RATING_DESC:
+                    mlQuery.orderByTitleRating(
+                            MovieListQuery.OrderMode.ASC, MovieListQuery.OrderMode.DESC
+                    );
+                    break;
+                case TITLE_DESC_RATING_ASC:
+                    mlQuery.orderByTitleRating(
+                            MovieListQuery.OrderMode.DESC, MovieListQuery.OrderMode.ASC
+                    );
+                    break;
+                case TITLE_DESC_RATING_DESC:
+                    mlQuery.orderByTitleRating(
+                            MovieListQuery.OrderMode.DESC, MovieListQuery.OrderMode.DESC
+                    );
+                    break;
+                case RATING_DESC_TITLE_ASC:
+                default:
+                    mlQuery.orderByRatingTitle(
+                            MovieListQuery.OrderMode.DESC, MovieListQuery.OrderMode.ASC
+                    );
+                    break;
             }
-
             switch(sessionUser.getQueryMode()) {
                 case SEARCH:
                     String[] searchParameters = sessionUser.getSearchParameters();
@@ -136,25 +146,22 @@ public class MovieListServlet extends HttpServlet {
                     break;
             }
 
-            // Total count query
-            String countQuery = "SELECT COUNT(*) AS total FROM movies m LEFT JOIN ratings r ON m.id = r.movieId";
-            PreparedStatement countStatement = conn.prepareStatement(countQuery);
-            ResultSet countResultSet = countStatement.executeQuery();
-            int totalRecords = 0;
-            if (countResultSet.next()) {
-                totalRecords = countResultSet.getInt("total");
-            }
-            countStatement.close();
-            int totalPages = (int) Math.ceil((double) totalRecords / limit);
+            // Back form parameters
+            sessionUser.backFormParameters(paramsObject);
 
-            JsonObject responseObject = new JsonObject();
-            responseObject.add("movies", resultArray);
-            responseObject.addProperty("totalRecords", totalRecords);
-            responseObject.addProperty("totalPages", totalPages);
-
+            // Retrieve search results
             PreparedStatement mlStatement = mlQuery.prepareStatement(conn);
             mlrp.processResultSet(mlStatement.executeQuery());
             mlStatement.close();
+
+            // Count number of movies found for this search result
+            // This should automatically add a count property to the response object
+            PreparedStatement mlCountStatement = mlQuery.prepareCountStatement(conn);
+            crp.processResultSet(mlCountStatement.executeQuery());
+            mlCountStatement.close();
+
+            responseObject.add("params", paramsObject);
+            responseObject.add("results", resultArray);
 
             // Write JSON string to output
             out.write(responseObject.toString());
