@@ -52,7 +52,7 @@ public class MovieListServlet extends HttpServlet {
          * in combination with this service
          *
          * @response {
-         *   params: {...}      // back formation of query params
+         *   params: {...}      // back formation of query params + query mode
          *   results: {...},    // search results
          *   count: string,     // converted from an integer
          * }

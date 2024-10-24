@@ -144,6 +144,7 @@ public class SessionUser {
         String sortCatString = userQuery.sortCategory.name()
                 .toLowerCase().replace("_", "-");
 
+        whereToStore.addProperty("queryMode", userQuery.mode.name().toLowerCase());
         whereToStore.addProperty("limit", limitString);
         whereToStore.addProperty("page", pageString);
         whereToStore.addProperty("sortBy", sortCatString);
@@ -157,7 +158,7 @@ public class SessionUser {
                 break;
             case BROWSE:
                 whereToStore.addProperty("alpha", userQuery.alpha);
-                whereToStore.addProperty("genreId", userQuery.genreId);
+                whereToStore.addProperty("genre", userQuery.genreId);
                 break;
             default:
                 break;

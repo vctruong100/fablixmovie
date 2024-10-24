@@ -1,6 +1,25 @@
-let currentPage = 1; // Default to the first page
-let currentLimit = 10; // Default to 10 movies per page
-let totalPages = 1;  // Default value
+// TODO: properly implement jump without making any changes to the backend
+
+/*
+ * NOTE: These values do not persist across pages, but
+ * the values will always be assigned ONCE using the current
+ * session values on page load UNLESS a new search / browse query is initiated
+ *
+ * This is achieved via back form parameters from the API call in
+ * case you don't like to read code
+ */
+let totalPages = null;
+let currentPage = null;
+let currentLimit = null;
+let currentSortBy = null;
+
+let currentTitle = null;
+let currentYear = null;
+let currentDirector = null;
+let currentStar = null;
+
+let currentAlpha = null;
+let currentGenre = null;
 
 /**
  * Handles the data returned by the API, read the jsonObject and populate data into HTML elements
@@ -16,10 +35,25 @@ function handleMovieResult(resultData) {
 
     // List of parameters used to retrieve the result
     // Parameter fields are dependent on whether search query mode was search or browse by genre
-    // Maybe this can be used to restore the page with the query info?
+    // Maybe this can be used to restore the page with the query info? (for example HTML field values?)
     let backFormParams = resultData.params;
     console.log("back form params");
     console.log(backFormParams);
+
+    // store session values
+    currentPage = parseInt(backFormParams.page);
+    currentLimit = parseInt(backFormParams.limit);
+    currentSortBy = backFormParams.sortBy;
+
+    if (backFormParams.queryMode === "search") {
+        currentTitle = backFormParams.title;
+        currentYear = backFormParams.year;
+        currentDirector = backFormParams.director;
+        currentStar = backFormParams.star;
+    } else if (backFormParams.queryMode === "browse") {
+        currentAlpha = backFormParams.alpha;
+        currentGenre = backFormParams.genre;
+    }
 
     // Total number of movies found for this search result only
     // Does not count ALL movies
@@ -91,8 +125,15 @@ function getQueryParams() {
         queryString += `&alpha=${params.get("alpha")}`;
     }
 
-    queryString += `&limit=${currentLimit}`;
-    queryString += `&page=${currentPage}`;
+    // Only assign limit and page if they are assigned
+    // Assignment is deferred until the back form parameters
+    // are returned via API
+    if (currentLimit != null) {
+        queryString += `&limit=${currentLimit}`;
+    }
+    if (currentPage != null) {
+        queryString += `&page=${currentPage}`;
+    }
 
     const sortByValue = jQuery("#sort-by").val();
     if (sortByValue) {
