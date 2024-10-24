@@ -1,6 +1,7 @@
 import com.google.gson.JsonObject;
 import jakarta.servlet.ServletConfig;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -14,9 +15,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Map;
-import java.util.Random;
 
+@WebServlet(name = "PaymentServlet", urlPatterns = "/api/payment")
 public class PaymentServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
     private DataSource dataSource;
@@ -80,7 +80,10 @@ public class PaymentServlet extends HttpServlet {
         if (isPaymentValid) {
             responseObject.addProperty("status", "success");
             responseObject.addProperty("message", "Payment processed successfully");
-            // Redirect to PlaceOrderServlet could be handled on the front-end after receiving the response.
+
+            user.clearCart();
+            session.setAttribute("user", user);
+
         } else {
             responseObject.addProperty("status", "error");
             responseObject.addProperty("message", "Invalid payment details");

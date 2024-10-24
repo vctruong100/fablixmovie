@@ -5,6 +5,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import jakarta.servlet.ServletConfig;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -18,10 +19,9 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.HashMap;
 import java.util.Map;
-import java.util.Random;
 
+@WebServlet(name = "ShoppingCartServlet", urlPatterns = "/api/shoppingcart")
 public class ShoppingCartServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
     private DataSource dataSource;
@@ -47,15 +47,15 @@ public class ShoppingCartServlet extends HttpServlet {
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
 
-        Map<Integer, SessionUser.CartItem> cart = user.getShoppingCart();
+        Map<String, SessionUser.CartItem> cart = user.getShoppingCart();
 
         double totalPrice = 0.0;
         JsonArray itemsArray = new JsonArray();
 
         if (!cart.isEmpty()) {
             try (Connection conn = dataSource.getConnection()) {
-                for (Map.Entry<Integer, SessionUser.CartItem> entry : cart.entrySet()) {
-                    int movieId = entry.getKey();
+                for (Map.Entry<String, SessionUser.CartItem> entry : cart.entrySet()) {
+                    String movieId = entry.getKey();
                     SessionUser.CartItem cartItem = entry.getValue();
 
                     MovieQuery movieQuery = new MovieQuery(String.valueOf(movieId));
@@ -110,18 +110,18 @@ public class ShoppingCartServlet extends HttpServlet {
             return;
         }
 
-        Map<Integer, SessionUser.CartItem> cart = user.getShoppingCart();
+        Map<String, SessionUser.CartItem> cart = user.getShoppingCart();
 
         String action = request.getParameter("action");
-        int movieId = Integer.parseInt(request.getParameter("movieId"));
+        String movieId = request.getParameter("movieId");
 
-        if (movieId <= 0) {
+        if (movieId == null || movieId.isEmpty()) {
             response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid movie ID.");
             return;
         }
 
         if ("add".equals(action)) {
-            double price = generateRandomPrice();
+            double price = fetchPriceFromDatabase(movieId);
             user.addToCart(movieId, price);
         } else if ("remove".equals(action)) {
             user.removeFromCart(movieId);
@@ -134,8 +134,21 @@ public class ShoppingCartServlet extends HttpServlet {
         response.sendRedirect("shoppingcart");
     }
 
-    private double generateRandomPrice() {
-        Random random = new Random();
-        return 5.0 + (15.0 * random.nextDouble()); // Generates price between $5 and $20
+    private double fetchPriceFromDatabase(String movieId) {
+        double price = 0.0;
+        try (Connection conn = dataSource.getConnection()) {
+            String query = "SELECT price FROM prices WHERE movieId = ?";
+            try (PreparedStatement statement = conn.prepareStatement(query)) {
+                statement.setString(1, movieId);
+                try (ResultSet rs = statement.executeQuery()) {
+                    if (rs.next()) {
+                        price = rs.getDouble("price");
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return price;
     }
 }

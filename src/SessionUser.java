@@ -165,7 +165,7 @@ public class SessionUser {
         }
     }
 
-    private Map<Integer, CartItem> shoppingCart = new HashMap<>();
+    private Map<String, CartItem> shoppingCart = new HashMap<>();
 
     public static class CartItem {
         public int quantity;
@@ -177,27 +177,29 @@ public class SessionUser {
         }
     }
 
-    public Map<Integer, CartItem> getShoppingCart() {
+    public Map<String, CartItem> getShoppingCart() {
         return shoppingCart;
     }
 
-    public void addToCart(int movieId, double price) {
+    public void clearCart() { shoppingCart.clear(); }
+
+    public void addToCart(String movieId, double price) {
         CartItem item = shoppingCart.getOrDefault(movieId, new CartItem(0, price));
         item.quantity++;
         shoppingCart.put(movieId, item);
     }
 
-    public void removeFromCart(int movieId) {
+    public void removeFromCart(String movieId) {
         shoppingCart.remove(movieId);
     }
 
-    public void decreaseCartItem(int movieId) {
+    public void decreaseCartItem(String movieId) {
         CartItem item = shoppingCart.get(movieId);
         if (item != null) {
             if (item.quantity > 1) {
                 item.quantity--;
             } else {
-                shoppingCart.remove(movieId);  // Remove the item if quantity reaches 0
+                shoppingCart.remove(movieId); // Remove the item if quantity reaches 0
             }
         }
     }
@@ -206,7 +208,7 @@ public class SessionUser {
         double totalPrice = 0.0;
 
         for (CartItem cartItem : shoppingCart.values()) {
-            totalPrice += cartItem.price * cartItem.quantity;  // Use stored prices
+            totalPrice += cartItem.price * cartItem.quantity;
         }
 
         return totalPrice;
