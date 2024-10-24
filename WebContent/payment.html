@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="payment.js" defer></script>
+</head>
+<body>
+<nav class="navbar">
+    <div class="navbar-links">
+        <a href="mainpage.html">Home</a>
+        <a href="payment.html">Checkout</a>
+    </div>
+</nav>
+
+<div class="container">
+    <h1>Payment Information</h1>
+    <p>Total Price: <span id="total-price">$0.00</span></p>
+
+    <form id="payment-form">
+        <label for="first-name">First Name:</label>
+        <input type="text" id="first-name" name="firstName" required><br>
+
+        <label for="last-name">Last Name:</label>
+        <input type="text" id="last-name" name="lastName" required><br>
+
+        <label for="credit-card-number">Credit Card Number:</label>
+        <input type="text" id="credit-card-number" name="creditCardNumber" required><br>
+
+        <label for="expiration-date">Expiration Date (YYYY-MM):</label>
+        <input type="text" id="expiration-date" name="expirationDate" required><br>
+
+        <button type="submit">Place Order</button>
+    </form>
+
+    <div id="error-message"></div>
+</div>
+</body>
+</html>

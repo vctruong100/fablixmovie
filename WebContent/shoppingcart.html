@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shopping Cart</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="shoppingcart.js" defer></script>
+</head>
+<body>
+<nav class="navbar">
+    <div class="navbar-links">
+        <a href="mainpage.html">Home</a>
+        <a href="payment.html">Checkout</a>
+    </div>
+</nav>
+
+<div class="container">
+    <h1>Your Shopping Cart</h1>
+    <table id="cart-table" class="movie-table">
+        <thead>
+        <tr>
+            <th>Title</th>
+            <th>Quantity</th>
+            <th>Price</th>
+            <th>Total</th>
+            <th>Actions</th>
+        </tr>
+        </thead>
+        <tbody id="cart-items-body">
+        </tbody>
+    </table>
+    <h3>Total Price: <span id="total-price">$0.00</span></h3>
+    <button id="proceed-to-payment">Proceed to Payment</button>
+</div>
+</body>
+</html>

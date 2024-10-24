@@ -31,6 +31,22 @@ function handleMovieResult(resultData) {
     }
 }
 
+
+jQuery("#add-to-cart").on("click", function() {
+    let movieId = $(this).data('id');
+    $.ajax({
+        url: "api/shoppingcart",
+        method: "POST",
+        data: { movieId: movieId, action: "add" },
+        success: function() {
+            alert("Added to cart successfully!");
+        },
+        error: function() {
+            alert("Failed to add to cart.");
+        }
+    });
+});
+
 jQuery("#back-to-list").on("click", function() {
     const movieListState = sessionStorage.getItem("movieListState");
     let queryParams = "";
