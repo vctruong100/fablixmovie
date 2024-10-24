@@ -25,8 +25,10 @@ function handleStarResult(resultData) {
         }
     }
 }
-// Add a "Back to Movie List" button that includes the movie list state in the URL
-jQuery("#back-to-list").on("click", function() {
+
+jQuery("#results-btn").on("click", function(event) {
+    event.preventDefault();
+
     const movieListState = sessionStorage.getItem("movieListState");
     let queryParams = "";
     if (movieListState) {
@@ -44,7 +46,23 @@ jQuery("#back-to-list").on("click", function() {
     window.location.href = `movielist.html?${queryParams}`;
 });
 
+jQuery("#back-to-list").on("click", function() {
+    const movieListState = sessionStorage.getItem("movieListState");
+    let queryParams = "";
+    if (movieListState) {
+        const state = JSON.parse(movieListState);
+        queryParams = `&limit=${state.currentLimit}&page=${state.currentPage}&sortBy=${state.currentSortBy}`;
 
+        if (state.currentAlpha) {
+            queryParams += `&alpha=${state.currentAlpha}`;
+        }
+        if (state.currentGenre) {
+            queryParams += `&genre=${state.currentGenre}`;
+        }
+    }
+
+    window.location.href = `movielist.html?${queryParams}`;
+});
 
 jQuery.ajax({
     dataType: "json",  // Return data type
