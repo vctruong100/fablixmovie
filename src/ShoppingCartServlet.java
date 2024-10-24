@@ -11,6 +11,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import query.MovieQuery;
+import resproc.MovieResultProc;
 
 import javax.sql.DataSource;
 import java.io.IOException;
@@ -58,29 +59,15 @@ public class ShoppingCartServlet extends HttpServlet {
                     String movieId = entry.getKey();
                     SessionUser.CartItem cartItem = entry.getValue();
 
-                    MovieQuery movieQuery = new MovieQuery(String.valueOf(movieId));
-                    try (PreparedStatement statement = movieQuery.prepareStatement(conn);
-                         ResultSet rs = statement.executeQuery()) {
+                    JsonObject movieObject = new JsonObject();
+                    MovieQuery movieQuery = new MovieQuery(movieId);
+                    MovieResultProc mrp =new MovieResultProc(movieObject);
 
-                        if (rs.next()) {
-                            String movieTitle = rs.getString("m.title");
+                    PreparedStatement mStatement = movieQuery.prepareStatement(conn);
+                    mrp.processResultSet(mStatement.executeQuery());
+                    mStatement.close();
 
-                            double pricePerItem = cartItem.price;
-                            double itemTotalPrice = pricePerItem * cartItem.quantity;
-                            totalPrice += itemTotalPrice;
-
-                            JsonObject itemObject = new JsonObject();
-                            itemObject.addProperty("title", movieTitle);
-                            itemObject.addProperty("quantity", cartItem.quantity);
-                            itemObject.addProperty("price", pricePerItem);
-                            itemObject.addProperty("total", itemTotalPrice);
-
-                            itemsArray.add(itemObject);
-
-                        }
-                    } catch (SQLException e) {
-                        e.printStackTrace();
-                    }
+                    movieObject.addProperty("quantity", cartItem.quantity);
                 }
             } catch (SQLException e) {
                 e.printStackTrace();
