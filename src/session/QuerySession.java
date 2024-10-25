@@ -6,6 +6,7 @@ public class QuerySession {
     public enum QueryMode {
         NONE, SEARCH, BROWSE
     }
+
     public enum SortCategory {
         RATING_ASC_TITLE_ASC,
         RATING_ASC_TITLE_DESC,
@@ -15,70 +16,44 @@ public class QuerySession {
         TITLE_ASC_RATING_DESC,
         TITLE_DESC_RATING_ASC,
         TITLE_DESC_RATING_DESC,
+        USER,
     }
 
-    private static class UserQuery {
-        public QueryMode mode = QueryMode.NONE;
+    public static class QueryParameterSet {
+        public QueryMode queryMode;
         public SortCategory sortCategory;
-        public int limit = 10;
-        public int page = 1;
-
-        /* search */
-        public String title;
-        public String director;
-        public String year;
-        public String star;
-
-        /* browse */
-        public String alpha;
-        public String genreId;
+        public int limit, page;
+        public String[] params;
     }
 
-    private final UserQuery userQuery;
+    /* constants */
+    private final static int DEFAULT_LIMIT = 10,
+            DEFAULT_PAGE = 1,
+            USER_LIMIT = -1,
+            USER_PAGE = -1;
+    private final static SortCategory DEFAULT_SORT =
+            SortCategory.RATING_ASC_TITLE_ASC;
 
-    public QuerySession() {
-        this.userQuery = new UserQuery();
-    }
+    /* local state */
+    public QueryMode queryMode = QueryMode.NONE;
+    public int limit = DEFAULT_LIMIT,
+            page = DEFAULT_PAGE;
+    public SortCategory sortCategory = DEFAULT_SORT;
 
-    public QueryMode getQueryMode() {
-        return userQuery.mode;
-    }
+    /* search */
+    public String title,
+            year,
+            director,
+            star;
 
-    public String[] getBrowseParameters() {
-        return new String[]{
-                userQuery.alpha,
-                userQuery.genreId,
-        };
-    }
+    /* browse */
+    public String alpha,
+            genreId;
 
-    public String[] getSearchParameters() {
-        return new String[]{
-                userQuery.title,
-                userQuery.director,
-                userQuery.year,
-                userQuery.star,
-        };
-    }
-
-    public void setBrowseParameters(String alpha, String genreId) {
-        userQuery.mode = QueryMode.BROWSE;
-        userQuery.alpha = alpha;
-        userQuery.genreId = genreId;
-    }
-
-    public void setSearchParameters(
-            String title, String year, String director, String star) {
-        userQuery.mode = QueryMode.SEARCH;
-        userQuery.title = title;
-        userQuery.year = year;
-        userQuery.director = director;
-        userQuery.star = star;
-    }
-
-    public int getSetLimit(String limitString)
+    public static int parseLimit(String limitString)
             throws IllegalArgumentException {
         if (limitString == null || limitString.isEmpty()) {
-            return userQuery.limit;
+            return USER_LIMIT;
         } else {
             int limit;
             try {
@@ -89,15 +64,14 @@ public class QuerySession {
             if (limit < 1 || limit > 100) {
                 throw new IllegalArgumentException("limit must be between 1 and 100");
             }
-            userQuery.limit = limit;
             return limit;
         }
     }
 
-    public int getSetPage(String pageString)
+    public static int parsePage(String pageString)
             throws IllegalArgumentException {
         if (pageString == null || pageString.isEmpty()) {
-            return userQuery.page;
+            return DEFAULT_PAGE;
         } else {
             int page;
             try {
@@ -108,15 +82,14 @@ public class QuerySession {
             if (page < 1) {
                 throw new IllegalArgumentException("page must be greater than 0");
             }
-            userQuery.page = page;
             return page;
         }
     }
 
-    public SortCategory getSetSortCategory(String sortCatString)
+    public static SortCategory parseSortCategory(String sortCatString)
             throws IllegalArgumentException {
         if (sortCatString == null || sortCatString.isEmpty()) {
-            return userQuery.sortCategory;
+            return SortCategory.USER;
         } else {
             SortCategory sortCat;
             try {
@@ -126,35 +99,86 @@ public class QuerySession {
             } catch (Exception e) {
                 throw new IllegalArgumentException("invalid sort category");
             }
-            userQuery.sortCategory = sortCat;
             return sortCat;
         }
     }
 
-    public void backFormParameters(JsonObject whereToStore) {
-        String limitString = Integer.toString(userQuery.limit);
-        String pageString = Integer.toString(userQuery.page);
-        String sortCatString = userQuery.sortCategory.name()
-                .toLowerCase().replace("_", "-");
-
-        whereToStore.addProperty("queryMode", userQuery.mode.name().toLowerCase());
-        whereToStore.addProperty("limit", limitString);
-        whereToStore.addProperty("page", pageString);
-        whereToStore.addProperty("sortBy", sortCatString);
-
-        switch(userQuery.mode) {
+    public static JsonObject backFormParameters(QueryParameterSet qpSet) {
+        JsonObject backFormParameters = new JsonObject();
+        backFormParameters.addProperty("queryMode",
+                qpSet.queryMode.name().toLowerCase());
+        backFormParameters.addProperty("limit",
+                Integer.toString(qpSet.limit));
+        backFormParameters.addProperty("page",
+                Integer.toString(qpSet.page));
+        backFormParameters.addProperty("sortBy",
+                qpSet.sortCategory.name()
+                        .toLowerCase()
+                        .replace("_", "-"));
+        switch(qpSet.queryMode) {
             case SEARCH:
-                whereToStore.addProperty("title", userQuery.title);
-                whereToStore.addProperty("year", userQuery.year);
-                whereToStore.addProperty("director", userQuery.director);
-                whereToStore.addProperty("star", userQuery.star);
+                backFormParameters.addProperty("title", qpSet.params[0]);
+                backFormParameters.addProperty("year", qpSet.params[1]);
+                backFormParameters.addProperty("director", qpSet.params[2]);
+                backFormParameters.addProperty("star", qpSet.params[3]);
                 break;
             case BROWSE:
-                whereToStore.addProperty("alpha", userQuery.alpha);
-                whereToStore.addProperty("genre", userQuery.genreId);
+                backFormParameters.addProperty("alpha", qpSet.params[0]);
+                backFormParameters.addProperty("genre", qpSet.params[1]);
                 break;
             default:
-                break;
+        }
+        return backFormParameters;
+    }
+
+    public synchronized QueryParameterSet getParameters() {
+        QueryParameterSet qpSet = new QueryParameterSet();
+        qpSet.queryMode = queryMode;
+        qpSet.limit = limit;
+        qpSet.page = page;
+        qpSet.sortCategory = sortCategory;
+        switch (queryMode) {
+            case SEARCH:
+                qpSet.params = new String[]{title, year, director, star};
+                return qpSet;
+            case BROWSE:
+                qpSet.params = new String[]{alpha, genreId};
+                return qpSet;
+            default:
+                return null;
+        }
+    }
+
+    public synchronized void setBrowseParameters(
+            int limit, int page, SortCategory sortCat,
+            String alpha, String genreId) {
+        setLimitPageSort(limit, page, sortCat);
+        this.queryMode = QueryMode.BROWSE;
+        this.alpha = alpha;
+        this.genreId = genreId;
+    }
+
+    public synchronized void setSearchParameters(
+            int limit, int page, SortCategory sortCat,
+            String title, String year, String director, String star) {
+        setLimitPageSort(limit, page, sortCat);
+        this.queryMode = QueryMode.SEARCH;
+        this.title = title;
+        this.year = year;
+        this.director = director;
+        this.star = star;
+    }
+
+    private void setLimitPageSort(
+            int limit, int page, SortCategory sortCat) {
+        if (limit != USER_LIMIT) {
+            this.limit = limit;
+        }
+        if (page != USER_PAGE) {
+            this.page = page;
+        }
+        if (sortCat != SortCategory.USER) {
+            this.sortCategory = sortCat;
         }
     }
 }

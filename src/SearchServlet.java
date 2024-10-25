@@ -46,22 +46,15 @@ public class SearchServlet extends HttpServlet {
         QuerySession querySession = (QuerySession)request.getSession()
                 .getAttribute("query");
 
-        String title = request.getParameter("title");
-        String year = request.getParameter("year");
-        String director = request.getParameter("director");
-        String star = request.getParameter("star");
-        String limitString = request.getParameter("limit");
-        String pageString = request.getParameter("page");
-        String sortCatString = request.getParameter("sortBy");
-
-        querySession.setSearchParameters(title, year, director, star);
-        querySession.getSetLimit(limitString);
-        querySession.getSetPage(pageString);
-        querySession.getSetSortCategory(sortCatString);
-
-        request.getServletContext().log("search " + "(title=" + title +
-                ", year=" + year + ", director=" + director + ", star=" + star +
-                ", limit=" + limitString + ", page=" + pageString + ")");
+        querySession.setSearchParameters(
+                QuerySession.parseLimit(request.getParameter("limit")),
+                QuerySession.parsePage(request.getParameter("page")),
+                QuerySession.parseSortCategory(request.getParameter("sortBy")),
+                request.getParameter("title"),
+                request.getParameter("year"),
+                request.getParameter("director"),
+                request.getParameter("star")
+        );
 
         /*
          * Forward the request and response to MovieListServlet

@@ -61,27 +61,29 @@ public class MovieListServlet extends HttpServlet {
         QuerySession querySession = (QuerySession)request.getSession()
                 .getAttribute("query");
 
+        QuerySession.QueryParameterSet qpSet =
+                querySession.getParameters();
+
         // Output stream to STDOUT
         PrintWriter out = response.getWriter();
 
         // Get a connection from dataSource and let resource manager close the connection after usage.
         try (Connection conn = dataSource.getConnection()) {
             JsonObject responseObject = new JsonObject();
-            JsonObject paramsObject = new JsonObject();
             JsonArray resultArray = new JsonArray();
 
             MovieListQuery mlQuery = new MovieListQuery();
             MovieListResultProc mlrp = new MovieListResultProc(resultArray);
             CountResultProc crp = new CountResultProc(responseObject);
 
-            int limit = querySession.getSetLimit(null);
-            int page = querySession.getSetPage(null);
+            int limit = qpSet.limit;
+            int page = qpSet.page;
             int offset = limit * (page - 1);
 
             mlQuery.setLimit(limit);
             mlQuery.setOffset(offset);
 
-            switch(querySession.getSetSortCategory(null)) {
+            switch(qpSet.sortCategory) {
                 case RATING_ASC_TITLE_ASC:
                     mlQuery.orderByRatingTitle(
                             MovieListQuery.OrderMode.ASC, MovieListQuery.OrderMode.ASC
@@ -92,6 +94,10 @@ public class MovieListServlet extends HttpServlet {
                             MovieListQuery.OrderMode.ASC, MovieListQuery.OrderMode.DESC
                     );
                     break;
+                case RATING_DESC_TITLE_ASC:
+                    mlQuery.orderByRatingTitle(
+                            MovieListQuery.OrderMode.DESC, MovieListQuery.OrderMode.ASC
+                    );
                 case RATING_DESC_TITLE_DESC:
                     mlQuery.orderByRatingTitle(
                             MovieListQuery.OrderMode.DESC, MovieListQuery.OrderMode.DESC
@@ -117,38 +123,21 @@ public class MovieListServlet extends HttpServlet {
                             MovieListQuery.OrderMode.DESC, MovieListQuery.OrderMode.DESC
                     );
                     break;
-                case RATING_DESC_TITLE_ASC:
                 default:
-                    mlQuery.orderByRatingTitle(
-                            MovieListQuery.OrderMode.DESC, MovieListQuery.OrderMode.ASC
-                    );
-                    break;
             }
-            switch(querySession.getQueryMode()) {
+            switch(qpSet.queryMode) {
                 case SEARCH:
-                    String[] searchParameters = querySession.getSearchParameters();
-                    String title = searchParameters[0];
-                    String director = searchParameters[1];
-                    String year = searchParameters[2];
-                    String star = searchParameters[3];
-                    mlQuery.setTitle(title);
-                    mlQuery.setDirector(director);
-                    mlQuery.setYear(year);
-                    mlQuery.setStar(star);
+                    mlQuery.setTitle(qpSet.params[0]);
+                    mlQuery.setYear(qpSet.params[1]);
+                    mlQuery.setDirector(qpSet.params[2]);
+                    mlQuery.setStar(qpSet.params[3]);
                     break;
                 case BROWSE:
-                    String[] browseParameters = querySession.getBrowseParameters();
-                    String alpha = browseParameters[0];
-                    String genreId = browseParameters[1];
-                    mlQuery.setAlpha(alpha);
-                    mlQuery.setGenreId(genreId);
+                    mlQuery.setAlpha(qpSet.params[0]);
+                    mlQuery.setGenreId(qpSet.params[1]);
                     break;
                 default:
-                    break;
             }
-
-            // Back form parameters
-            querySession.backFormParameters(paramsObject);
 
             // Retrieve search results
             PreparedStatement mlStatement = mlQuery.prepareStatement(conn);
@@ -161,7 +150,8 @@ public class MovieListServlet extends HttpServlet {
             crp.processResultSet(mlCountStatement.executeQuery());
             mlCountStatement.close();
 
-            responseObject.add("params", paramsObject);
+            responseObject.add("params",
+                    QuerySession.backFormParameters(qpSet));
             responseObject.add("results", resultArray);
 
             // Write JSON string to output

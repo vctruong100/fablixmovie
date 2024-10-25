@@ -46,20 +46,13 @@ public class BrowseServlet extends HttpServlet {
         QuerySession querySession = (QuerySession)request.getSession()
                 .getAttribute("query");
 
-        String alpha = request.getParameter("alpha");
-        String genreId = request.getParameter("genre");
-        String limitString = request.getParameter("limit");
-        String pageString = request.getParameter("page");
-        String sortCatString = request.getParameter("sortBy");
-
-        querySession.setBrowseParameters(alpha, genreId);
-        querySession.getSetLimit(limitString);
-        querySession.getSetPage(pageString);
-        querySession.getSetSortCategory(sortCatString);
-
-        request.getServletContext().log("browse " + "(alpha=" + alpha +
-                ", genre=" + genreId + ", limit=" + limitString +
-                ", page=" + pageString + ")");
+        querySession.setBrowseParameters(
+                QuerySession.parseLimit(request.getParameter("limit")),
+                QuerySession.parsePage(request.getParameter("page")),
+                QuerySession.parseSortCategory(request.getParameter("sortBy")),
+                request.getParameter("alpha"),
+                request.getParameter("genreId")
+        );
 
         /*
          * Forward the request and response to MovieListServlet
