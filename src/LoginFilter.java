@@ -20,19 +20,22 @@ public class LoginFilter implements Filter {
         HttpServletRequest httpRequest = (HttpServletRequest) request;
         HttpServletResponse httpResponse = (HttpServletResponse) response;
 
-        System.out.println("LoginFilter: " + httpRequest.getRequestURI());
+        System.out.print("LoginFilter: " + httpRequest.getRequestURI());
 
         // Check if this URL is allowed to access without logging in
         if (this.isUrlAllowedWithoutLogin(httpRequest.getRequestURI())) {
             // Keep default action: pass along the filter chain
+            System.out.println(" (allowed)");
             chain.doFilter(request, response);
             return;
         }
 
         // Redirect to login page if the "username" attribute doesn't exist in session
         if (httpRequest.getSession().getAttribute("username") == null) {
+            System.out.println(" (blocked)");
             httpResponse.sendRedirect("login.html");
         } else {
+            System.out.println(" (allowed)");
             chain.doFilter(request, response);
         }
     }
@@ -50,6 +53,7 @@ public class LoginFilter implements Filter {
         allowedURIs.add("login.html");
         allowedURIs.add("login.js");
         allowedURIs.add("api/login");
+        allowedURIs.add("styles.css");
     }
 
     public void destroy() {
