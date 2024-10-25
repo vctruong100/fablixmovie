@@ -51,7 +51,7 @@ public class BrowseServlet extends HttpServlet {
                 QuerySession.parsePage(request.getParameter("page")),
                 QuerySession.parseSortCategory(request.getParameter("sortBy")),
                 request.getParameter("alpha"),
-                request.getParameter("genreId")
+                request.getParameter("genre")
         );
 
         /*
