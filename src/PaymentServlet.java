@@ -6,6 +6,8 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import session.ShoppingCartSession;
+
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import javax.sql.DataSource;
@@ -31,18 +33,13 @@ public class PaymentServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        HttpSession session = request.getSession();
-        SessionUser user = (SessionUser) session.getAttribute("user");
-
-        if (user == null) {
-            response.sendRedirect("login.html");
-            return;
-        }
-
-        double totalPrice = user.calculateTotalPrice();
-
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
+
+        ShoppingCartSession scSession = (ShoppingCartSession)
+                request.getSession().getAttribute("shoppingCart");
+
+        double totalPrice = scSession.calculateTotalPrice();
 
         JsonObject responseObject = new JsonObject();
         responseObject.addProperty("totalPrice", totalPrice);
@@ -54,13 +51,11 @@ public class PaymentServlet extends HttpServlet {
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        HttpSession session = request.getSession();
-        SessionUser user = (SessionUser) session.getAttribute("user");
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
 
-        if (user == null) {
-            response.sendRedirect("login.html");
-            return;
-        }
+        ShoppingCartSession scSession = (ShoppingCartSession)
+                request.getSession().getAttribute("shoppingCart");
 
         String firstName = request.getParameter("firstName");
         String lastName = request.getParameter("lastName");
@@ -81,17 +76,12 @@ public class PaymentServlet extends HttpServlet {
             responseObject.addProperty("status", "success");
             responseObject.addProperty("message", "Payment processed successfully");
 
-            user.clearCart();
-            session.setAttribute("user", user);
-
+            scSession.clearCart();
         } else {
             responseObject.addProperty("status", "error");
             responseObject.addProperty("message", "Invalid payment details");
         }
 
-
-        response.setContentType("application/json");
-        response.setCharacterEncoding("UTF-8");
         PrintWriter out = response.getWriter();
         out.write(responseObject.toString());
         out.close();

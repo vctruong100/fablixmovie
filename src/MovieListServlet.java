@@ -12,6 +12,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import query.MovieListQuery;
 import resproc.CountResultProc;
 import resproc.MovieListResultProc;
+import session.QuerySession;
 
 import javax.sql.DataSource;
 import java.io.IOException;
@@ -57,7 +58,8 @@ public class MovieListServlet extends HttpServlet {
          *   count: string,     // converted from an integer
          * }
          */
-        SessionUser sessionUser = (SessionUser)request.getSession().getAttribute("user");
+        QuerySession querySession = (QuerySession)request.getSession()
+                .getAttribute("query");
 
         // Output stream to STDOUT
         PrintWriter out = response.getWriter();
@@ -72,14 +74,14 @@ public class MovieListServlet extends HttpServlet {
             MovieListResultProc mlrp = new MovieListResultProc(resultArray);
             CountResultProc crp = new CountResultProc(responseObject);
 
-            int limit = sessionUser.getSetLimit(null);
-            int page = sessionUser.getSetPage(null);
+            int limit = querySession.getSetLimit(null);
+            int page = querySession.getSetPage(null);
             int offset = limit * (page - 1);
 
             mlQuery.setLimit(limit);
             mlQuery.setOffset(offset);
 
-            switch(sessionUser.getSetSortCategory(null)) {
+            switch(querySession.getSetSortCategory(null)) {
                 case RATING_ASC_TITLE_ASC:
                     mlQuery.orderByRatingTitle(
                             MovieListQuery.OrderMode.ASC, MovieListQuery.OrderMode.ASC
@@ -122,9 +124,9 @@ public class MovieListServlet extends HttpServlet {
                     );
                     break;
             }
-            switch(sessionUser.getQueryMode()) {
+            switch(querySession.getQueryMode()) {
                 case SEARCH:
-                    String[] searchParameters = sessionUser.getSearchParameters();
+                    String[] searchParameters = querySession.getSearchParameters();
                     String title = searchParameters[0];
                     String director = searchParameters[1];
                     String year = searchParameters[2];
@@ -135,7 +137,7 @@ public class MovieListServlet extends HttpServlet {
                     mlQuery.setStar(star);
                     break;
                 case BROWSE:
-                    String[] browseParameters = sessionUser.getBrowseParameters();
+                    String[] browseParameters = querySession.getBrowseParameters();
                     String alpha = browseParameters[0];
                     String genreId = browseParameters[1];
                     mlQuery.setAlpha(alpha);
@@ -146,7 +148,7 @@ public class MovieListServlet extends HttpServlet {
             }
 
             // Back form parameters
-            sessionUser.backFormParameters(paramsObject);
+            querySession.backFormParameters(paramsObject);
 
             // Retrieve search results
             PreparedStatement mlStatement = mlQuery.prepareStatement(conn);

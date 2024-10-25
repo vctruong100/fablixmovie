@@ -9,6 +9,7 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import session.QuerySession;
 
 import javax.sql.DataSource;
 import java.io.IOException;
@@ -37,7 +38,13 @@ public class SearchServlet extends HttpServlet {
         response.setCharacterEncoding("UTF-8");
         response.setContentType("application/json");
 
-        SessionUser sessionUser = (SessionUser)request.getSession().getAttribute("user");
+        /*
+         * Initiate a new search query using the defined user parameters
+         * Note: This will replace the current stored session user parameters if they exist
+         */
+
+        QuerySession querySession = (QuerySession)request.getSession()
+                .getAttribute("query");
 
         String title = request.getParameter("title");
         String year = request.getParameter("year");
@@ -47,10 +54,10 @@ public class SearchServlet extends HttpServlet {
         String pageString = request.getParameter("page");
         String sortCatString = request.getParameter("sortBy");
 
-        sessionUser.setSearchParameters(title, year, director, star);
-        sessionUser.getSetLimit(limitString);
-        sessionUser.getSetPage(pageString);
-        sessionUser.getSetSortCategory(sortCatString);
+        querySession.setSearchParameters(title, year, director, star);
+        querySession.getSetLimit(limitString);
+        querySession.getSetPage(pageString);
+        querySession.getSetSortCategory(sortCatString);
 
         request.getServletContext().log("search " + "(title=" + title +
                 ", year=" + year + ", director=" + director + ", star=" + star +

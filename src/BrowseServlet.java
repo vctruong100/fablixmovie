@@ -8,6 +8,7 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import session.QuerySession;
 
 import javax.sql.DataSource;
 import java.io.IOException;
@@ -37,7 +38,13 @@ public class BrowseServlet extends HttpServlet {
         response.setCharacterEncoding("UTF-8");
         response.setContentType("application/json");
 
-        SessionUser sessionUser = (SessionUser)request.getSession().getAttribute("user");
+        /*
+         * Initiate a new browse query using the defined user parameters
+         * Note: This will replace the current stored session user parameters if they exist
+         */
+
+        QuerySession querySession = (QuerySession)request.getSession()
+                .getAttribute("query");
 
         String alpha = request.getParameter("alpha");
         String genreId = request.getParameter("genre");
@@ -45,10 +52,10 @@ public class BrowseServlet extends HttpServlet {
         String pageString = request.getParameter("page");
         String sortCatString = request.getParameter("sortBy");
 
-        sessionUser.setBrowseParameters(alpha, genreId);
-        sessionUser.getSetLimit(limitString);
-        sessionUser.getSetPage(pageString);
-        sessionUser.getSetSortCategory(sortCatString);
+        querySession.setBrowseParameters(alpha, genreId);
+        querySession.getSetLimit(limitString);
+        querySession.getSetPage(pageString);
+        querySession.getSetSortCategory(sortCatString);
 
         request.getServletContext().log("browse " + "(alpha=" + alpha +
                 ", genre=" + genreId + ", limit=" + limitString +

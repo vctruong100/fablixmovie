@@ -4,6 +4,8 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import session.QuerySession;
+import session.ShoppingCartSession;
 
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
@@ -49,8 +51,12 @@ public class LoginServlet extends HttpServlet {
                 // Check password
                 if (loginRs.getString("password").equals(password)) {
                     // Login success:
+
                     // Set this user into the session
-                    request.getSession().setAttribute("user", new SessionUser(username));
+                    request.getSession().setAttribute("username", username);
+                    request.getSession().setAttribute("query", new QuerySession());
+                    request.getSession().setAttribute("shoppingCart", new ShoppingCartSession());
+
                     responseJsonObject.addProperty("status", "success");
                     responseJsonObject.addProperty("message", "success");
                 } else {

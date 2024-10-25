@@ -1,9 +1,8 @@
+package session;
+
 import com.google.gson.JsonObject;
 
-import java.util.Map;
-import java.util.HashMap;
-
-public class SessionUser {
+public class QuerySession {
     public enum QueryMode {
         NONE, SEARCH, BROWSE
     }
@@ -35,16 +34,10 @@ public class SessionUser {
         public String genreId;
     }
 
-    private final String username;
     private final UserQuery userQuery;
 
-    public SessionUser(String username) {
-        this.username = username;
+    public QuerySession() {
         this.userQuery = new UserQuery();
-    }
-
-    public String getUsername() {
-        return username;
     }
 
     public QueryMode getQueryMode() {
@@ -164,54 +157,4 @@ public class SessionUser {
                 break;
         }
     }
-
-    private Map<String, CartItem> shoppingCart = new HashMap<>();
-
-    public static class CartItem {
-        public int quantity;
-        public double price;
-
-        public CartItem(int quantity, double price) {
-            this.quantity = quantity;
-            this.price = price;
-        }
-    }
-
-    public Map<String, CartItem> getShoppingCart() {
-        return shoppingCart;
-    }
-
-    public void clearCart() { shoppingCart.clear(); }
-
-    public void addToCart(String movieId, double price) {
-        CartItem item = shoppingCart.getOrDefault(movieId, new CartItem(0, price));
-        item.quantity++;
-        shoppingCart.put(movieId, item);
-    }
-
-    public void removeFromCart(String movieId) {
-        shoppingCart.remove(movieId);
-    }
-
-    public void decreaseCartItem(String movieId) {
-        CartItem item = shoppingCart.get(movieId);
-        if (item != null) {
-            if (item.quantity > 1) {
-                item.quantity--;
-            } else {
-                shoppingCart.remove(movieId); // Remove the item if quantity reaches 0
-            }
-        }
-    }
-
-    public double calculateTotalPrice() {
-        double totalPrice = 0.0;
-
-        for (CartItem cartItem : shoppingCart.values()) {
-            totalPrice += cartItem.price * cartItem.quantity;
-        }
-
-        return totalPrice;
-    }
-
 }

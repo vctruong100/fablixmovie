@@ -9,9 +9,10 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
 import query.MovieQuery;
 import resproc.MovieResultProc;
+import session.ShoppingCartSession;
+import session.ShoppingCartSession.CartItem;
 
 import javax.sql.DataSource;
 import java.io.IOException;
@@ -36,28 +37,24 @@ public class ShoppingCartServlet extends HttpServlet {
     }
 
     @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        HttpSession session = request.getSession();
-        SessionUser user = (SessionUser) session.getAttribute("user");
-
-        if (user == null) {
-            response.sendRedirect("login.html");
-            return;
-        }
-
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
 
-        Map<String, SessionUser.CartItem> cart = user.getShoppingCart();
+        ShoppingCartSession scSession = (ShoppingCartSession)
+                request.getSession().getAttribute("shoppingCart");
+
+        Map<String, CartItem> cart = scSession.getShoppingCart();
 
         double totalPrice = 0.0;
         JsonArray itemsArray = new JsonArray();
 
         if (!cart.isEmpty()) {
             try (Connection conn = dataSource.getConnection()) {
-                for (Map.Entry<String, SessionUser.CartItem> entry : cart.entrySet()) {
+                for (var entry : cart.entrySet()) {
                     String movieId = entry.getKey();
-                    SessionUser.CartItem cartItem = entry.getValue();
+                    CartItem cartItem = entry.getValue();
 
                     JsonObject movieObject = new JsonObject();
                     MovieQuery movieQuery = new MovieQuery(movieId);
@@ -74,30 +71,27 @@ public class ShoppingCartServlet extends HttpServlet {
                 return;
             }
         }
-        totalPrice = user.calculateTotalPrice();
+        totalPrice = scSession.calculateTotalPrice();
 
         JsonObject responseObject = new JsonObject();
         responseObject.add("items", itemsArray);
         responseObject.addProperty("totalPrice", totalPrice);
 
-        response.setContentType("application/json");
-        response.setCharacterEncoding("UTF-8");
         PrintWriter out = response.getWriter();
         out.write(responseObject.toString());
         out.close();
     }
 
     @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        HttpSession session = request.getSession();
-        SessionUser user = (SessionUser) session.getAttribute("user");
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
 
-        if (user == null) {
-            response.sendRedirect("login.html");
-            return;
-        }
+        ShoppingCartSession scSession = (ShoppingCartSession)
+                request.getSession().getAttribute("shoppingCart");
 
-        Map<String, SessionUser.CartItem> cart = user.getShoppingCart();
+        Map<String, CartItem> cart = scSession.getShoppingCart();
 
         String action = request.getParameter("action");
         String movieId = request.getParameter("movieId");
@@ -107,16 +101,16 @@ public class ShoppingCartServlet extends HttpServlet {
             return;
         }
 
-        if ("add".equals(action)) {
-            double price = fetchPriceFromDatabase(movieId);
-            user.addToCart(movieId, price);
-        } else if ("remove".equals(action)) {
-            user.removeFromCart(movieId);
-        } else if ("decrease".equals(action)) {
-            user.decreaseCartItem(movieId);
+        switch(action) {
+            case "add":
+                double price = fetchPriceFromDatabase(movieId);
+                scSession.addToCart(movieId, price);
+                break;
+            case "remove":
+                scSession.removeFromCart(movieId);
+            case "decrease":
+                scSession.decreaseCartItem(movieId);
         }
-
-        session.setAttribute("user", user);
 
         response.sendRedirect("shoppingcart");
     }
