@@ -38,29 +38,27 @@ public class SearchServlet extends HttpServlet {
         response.setCharacterEncoding("UTF-8");
         response.setContentType("application/json");
 
-        /*
-         * Initiate a new search query using the defined user parameters
-         * Note: This will replace the current stored session user parameters if they exist
-         */
-
-        QuerySession querySession = (QuerySession)request.getSession()
-                .getAttribute("query");
-
-        querySession.setSearchParameters(
-                QuerySession.parseLimit(request.getParameter("limit")),
-                QuerySession.parsePage(request.getParameter("page")),
-                QuerySession.parseSortCategory(request.getParameter("sortBy")),
-                request.getParameter("title"),
-                request.getParameter("year"),
-                request.getParameter("director"),
-                request.getParameter("star")
-        );
-
-        /*
-         * Forward the request and response to MovieListServlet
-         * which is able to handle searching with the saved session parameters
-         */
         try {
+            /*
+             * Initiate a new search query using the defined user parameters
+             * Note: This will replace the current stored session user parameters if they exist
+             */
+            QuerySession querySession = (QuerySession)request.getSession()
+                    .getAttribute("query");
+            querySession.setSearchParameters(
+                    QuerySession.parseLimit(request.getParameter("limit")),
+                    QuerySession.parsePage(request.getParameter("page")),
+                    QuerySession.parseSortCategory(request.getParameter("sortBy")),
+                    request.getParameter("title"),
+                    request.getParameter("year"),
+                    request.getParameter("director"),
+                    request.getParameter("star")
+            );
+
+            /*
+             * Forward the request and response to MovieListServlet
+             * which is able to handle searching with the saved session parameters
+             */
             request.getRequestDispatcher("/api/movie-list")
                     .forward(request, response);
         } catch(Exception e) {

@@ -38,27 +38,25 @@ public class BrowseServlet extends HttpServlet {
         response.setCharacterEncoding("UTF-8");
         response.setContentType("application/json");
 
-        /*
-         * Initiate a new browse query using the defined user parameters
-         * Note: This will replace the current stored session user parameters if they exist
-         */
-
-        QuerySession querySession = (QuerySession)request.getSession()
-                .getAttribute("query");
-
-        querySession.setBrowseParameters(
-                QuerySession.parseLimit(request.getParameter("limit")),
-                QuerySession.parsePage(request.getParameter("page")),
-                QuerySession.parseSortCategory(request.getParameter("sortBy")),
-                request.getParameter("alpha"),
-                request.getParameter("genre")
-        );
-
-        /*
-         * Forward the request and response to MovieListServlet
-         * which is able to handle searching with the saved session parameters
-         */
         try {
+            /*
+             * Initiate a new browse query using the defined user parameters
+             * Note: This will replace the current stored session user parameters if they exist
+             */
+            QuerySession querySession = (QuerySession)request.getSession()
+                    .getAttribute("query");
+            querySession.setBrowseParameters(
+                    QuerySession.parseLimit(request.getParameter("limit")),
+                    QuerySession.parsePage(request.getParameter("page")),
+                    QuerySession.parseSortCategory(request.getParameter("sortBy")),
+                    request.getParameter("alpha"),
+                    request.getParameter("genre")
+            );
+
+            /*
+             * Forward the request and response to MovieListServlet
+             * which is able to handle searching with the saved session parameters
+             */
             request.getRequestDispatcher("/api/movie-list")
                     .forward(request, response);
         } catch(Exception e) {
