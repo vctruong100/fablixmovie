@@ -15,8 +15,8 @@ let queryParams = {
     star: null,
     alpha: null,
     genre: null,
-}
-let totalPages = null
+};
+let totalPages = null;
 
 // based on queryParams and appended at the end of a URL
 // defer its construction until queryParams is initialized
@@ -59,7 +59,7 @@ function handleMovieResult(resultData) {
     // Total number of movies found for this search result only
     // Does not count ALL movies
     let count = parseInt(resultData.count);
-    totalPages = Math.ceil(count / queryParams.limit) || 1
+    totalPages = Math.ceil(count / queryParams.limit) || 1;
 
     // Update nextPage button after total pages has been computed
     nextPageElement.prop("disabled", queryParams.page === totalPages);
@@ -100,11 +100,6 @@ function handleMovieResult(resultData) {
     }
 }
 
-function handleResponse(response) {
-    handleMovieResult(response);
-
-    // Update elements after the movie result has updated
-}
 
 // Update movie list according to the current state of queryParams
 const updateMovieList = (queryParams) => {
@@ -156,10 +151,10 @@ function loadQueryParams() {
             queryParams.page = 1; // always start at first page
         }
         if (queryParams.limit === null) {
-            queryParams.limit = savedState.limit || 10
+            queryParams.limit = savedState.limit || 10;
         }
         if (queryParams.sortBy === null) {
-            queryParams.sortBy = savedState.sortBy || "title-asc-rating-asc"
+            queryParams.sortBy = savedState.sortBy || "title-asc-rating-asc";
         }
     } else {
         // No URL parameters, rely on sessionStorage instead
@@ -175,10 +170,10 @@ function propQueryParams() {
     sessionStorage.setItem("movieListState", JSON.stringify(queryParams));
 
     // Construct a new queryString via queryParams
-    queryString = ""
+    queryString = "";
     for (const [key, value] of Object.entries(queryParams)) {
         if (value) {
-            queryString += `&${key}=${value}`
+            queryString += `&${key}=${value}`;
         }
     }
     queryString = queryString.slice(1);
@@ -217,7 +212,7 @@ jQuery(document).on("click", "a", function() {
 
 // Handle sorting selection change
 sortByElement.on("change", function() {
-    queryParams.sortBy = sortByElement.val()
+    queryParams.sortBy = sortByElement.val();
     propQueryParams();
 });
 
