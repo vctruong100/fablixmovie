@@ -1,24 +1,38 @@
+/// movielist.js
 
 /*
- * NOTE: These values do not persist across pages, but
- * the values will always be assigned ONCE using the current
- * session values on page load UNLESS a new search / browse query is initiated
- *
- * This is achieved via back form parameters from the API call in
- * case you don't like to read code
+ * Query parameters to load
+ * We use sessionStorage to store/get params unless
+ * the user has already specified some parameters in the URL
  */
-let totalPages = null;
-let currentPage = null;
-let currentLimit = null;
-let currentSortBy = null;
+let queryParams = {
+    limit: null,
+    page: null,
+    sortBy: null,
+    title: null,
+    year: null,
+    director: null,
+    star: null,
+    alpha: null,
+    genre: null,
+}
+let totalPages = null
 
-let currentTitle = null;
-let currentYear = null;
-let currentDirector = null;
-let currentStar = null;
+// based on queryParams and appended at the end of a URL
+// defer its construction until queryParams is initialized
+let queryString = null;
 
-let currentAlpha = null;
-let currentGenre = null;
+
+// Elements retrieved from jQuery
+// Store here to avoid computing additional unnecessary queries
+// Note: $ is short for jQuery
+let limitPerPageElement = $("#limit-per-page");
+let pageNumberElement = $("#page-number");
+let sortByElement = $("#sort-by");
+let prevPageElement = $("#prev-page");
+let nextPageElement = $("#next-page");
+let resultsBtnElement = $("#results-btn");
+
 
 /**
  * Handles the data returned by the API, read the jsonObject and populate data into HTML elements
@@ -33,34 +47,24 @@ function handleMovieResult(resultData) {
     movieListElement.empty();
 
     // List of parameters used to retrieve the result
-    // Parameter fields are dependent on whether search query mode was search or browse by genre
-    // Maybe this can be used to restore the page with the query info? (for example HTML field values?)
+    // Currently, back form parameters are not used, because
+    // parameters are locally stored in sessionStorage
+    //
+    // However, it's a good way to check if the parameters are
+    // synced to the client
     let backFormParams = resultData.params;
     console.log("back form params");
     console.log(backFormParams);
 
-    // store session values
-    currentPage = parseInt(backFormParams.page);
-    currentLimit = parseInt(backFormParams.limit);
-    currentSortBy = backFormParams.sortBy;
-
-    if (backFormParams.queryMode === "search") {
-        currentTitle = backFormParams.title;
-        currentYear = backFormParams.year;
-        currentDirector = backFormParams.director;
-        currentStar = backFormParams.star;
-    } else if (backFormParams.queryMode === "browse") {
-        currentAlpha = backFormParams.alpha;
-        currentGenre = backFormParams.genre;
-    }
-
     // Total number of movies found for this search result only
     // Does not count ALL movies
     let count = parseInt(resultData.count);
-    totalPages = Math.ceil(count / currentLimit) || 1
+    totalPages = Math.ceil(count / queryParams.limit) || 1
+
+    // Update nextPage button after total pages has been computed
+    nextPageElement.prop("disabled", queryParams.page === totalPages);
 
     let movies = resultData.results;
-
     if (Array.isArray(movies)) {
         movies.forEach(movie => {
             let rowHTML = "<tr>";
@@ -94,193 +98,194 @@ function handleMovieResult(resultData) {
     } else {
         console.error("Expected movies array, but received:", movies);
     }
-    jQuery("#prev-page").prop("disabled", currentPage === 1);
-    jQuery("#next-page").prop("disabled", currentPage === totalPages);
 }
 
-jQuery(document).on("click", "a", function() {
-    storeCurrentState();
-});
+function handleResponse(response) {
+    handleMovieResult(response);
 
-function storeCurrentState() {
-    const state = {
-        currentPage: currentPage,
-        currentLimit: currentLimit,
-        currentSortBy: currentSortBy,
-        currentTitle: currentTitle,
-        currentYear: currentYear,
-        currentDirector: currentDirector,
-        currentStar: currentStar,
-        currentAlpha: currentAlpha,
-        currentGenre: currentGenre,
-    };
-    sessionStorage.setItem("movieListState", JSON.stringify(state));
+    // Update elements after the movie result has updated
 }
 
-function restoreState() {
-    const savedState = sessionStorage.getItem("movieListState");
-    if (savedState) {
-        const state = JSON.parse(savedState);
-        currentPage = state.currentPage || 1;
-        currentLimit = state.currentLimit || 10;
-        currentSortBy = state.currentSortBy || "title-asc-rating-asc";
-        currentTitle = state.currentTitle || "";
-        currentYear = state.currentYear || "";
-        currentDirector = state.currentDirector || "";
-        currentStar = state.currentStar || "";
-        currentAlpha = state.currentAlpha || "";
-        currentGenre = state.currentGenre || "";
-
-        // Update the UI with the restored state
-        jQuery("#page-number").val(currentPage);
-        jQuery("#limit-per-page").val(currentLimit);
-        jQuery("#sort-by").val(currentSortBy);
-    }
-}
-// Extract query parameters from the URL for search or browsing
-function getQueryParams() {
-    const params = new URLSearchParams(window.location.search);
-    let queryString = "";
-    if (params.has("title")) {
-        queryString += `&title=${params.get("title")}`;
-    }
-    if (params.has("year")) {
-        queryString += `&year=${params.get("year")}`;
-    }
-    if (params.has("director")) {
-        queryString += `&director=${params.get("director")}`;
-    }
-    if (params.has("star")) {
-        queryString += `&star=${params.get("star")}`;
-    }
-    if (params.has("genre")) {
-        queryString += `&genre=${params.get("genre")}`;
-    }
-    if (params.has("start")) {
-        queryString += `&start=${params.get("start")}`;
-    }
-    if (params.has("alpha")) {
-        const alphaValue = params.get("alpha");
-        console.log("Alpha value: " + alphaValue);
-        queryString += `&alpha=${params.get("alpha")}`;
-    }
-
-    // Only assign limit and page if they are assigned
-    // Assignment is deferred until the back form parameters
-    // are returned via API
-    if (currentLimit != null) {
-        queryString += `&limit=${currentLimit}`;
-    }
-    if (currentPage != null) {
-        queryString += `&page=${currentPage}`;
-    }
-
-    const sortByValue = jQuery("#sort-by").val();
-    if (sortByValue) {
-        queryString += `&sortBy=${sortByValue}`;
-    }
-    console.log("Generated query string: " + queryString);
-
-    return queryString;
-}
-
+// Update movie list according to the current state of queryParams
 const updateMovieList = (queryParams) => {
     // Determine which API to call based on queryParams
-    if (queryParams.includes("title=") || queryParams.includes("year=") ||
-        queryParams.includes("director=") || queryParams.includes("star=")) {
+    if (queryParams.title || queryParams.year ||
+        queryParams.director || queryParams.star) {
         // Case for search
         jQuery.ajax({
             dataType: "json",
             method: "GET",
-            url: `api/search?${queryParams}`,
-            success: (resultData) => handleMovieResult(resultData),
+            url: `api/search?${queryString}`,
+            success: (response) => handleMovieResult(response),
         });
-    }
-    // Case for browsing by alphabet or genre
-    else if (queryParams.includes("alpha=") || queryParams.includes("genre=")) {
+    } else if (queryParams.alpha || queryParams.genre) {
+        // Case for browse
         jQuery.ajax({
             dataType: "json",
             method: "GET",
-            url: `api/browse?${queryParams}`,
-            success: (resultData) => handleMovieResult(resultData),
-        });
-    }
-    // Default case for general movie listing (no search or filters applied)
-    else {
+            url: `api/browse?${queryString}`,
+            success: (response) => handleMovieResult(response),
+        })
+    } else {
+        // Default case for general movie listing (no search or filters applied)
+        // By default, this uses the previous query session as the base query
         jQuery.ajax({
             dataType: "json",
             method: "GET",
-            url: `api/movie-list?${queryParams}`,
-            success: (resultData) => handleMovieResult(resultData),
+            url: `api/movie-list`,
+            success: (response) => handleMovieResult(response),
         });
     }
-};
+}
+
+// Load any query parameters into the local queryParams state
+// You should only call this on a new page / URL load
+function loadQueryParams() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const savedState = JSON.parse(sessionStorage.getItem("movieListState")) || {};
+
+    // URL parameters take precedent
+    // in case the user initiates a new search/browse query
+    if (urlParams.size > 0) {
+        // We should look at limit, sortBy variable states to preserve
+        // the user's limit and sorting preferences if limit/sortBy are undefined
+        for (const [key, value] of urlParams.entries()) {
+            queryParams[key] = value;
+        }
+        if (queryParams.page === null) {
+            queryParams.page = 1; // always start at first page
+        }
+        if (queryParams.limit === null) {
+            queryParams.limit = savedState.limit || 10
+        }
+        if (queryParams.sortBy === null) {
+            queryParams.sortBy = savedState.sortBy || "title-asc-rating-asc"
+        }
+    } else {
+        // No URL parameters, rely on sessionStorage instead
+        for (const [key, value] of Object.entries(savedState)) {
+            queryParams[key] = value;
+        }
+    }
+}
+
+// Propagate the current query parameters onto any visible elements
+function propQueryParams() {
+    // Store the current query params into the sessionStorage
+    sessionStorage.setItem("movieListState", JSON.stringify(queryParams));
+
+    // Construct a new queryString via queryParams
+    queryString = ""
+    for (const [key, value] of Object.entries(queryParams)) {
+        if (value) {
+            queryString += `&${key}=${value}`
+        }
+    }
+    queryString = queryString.slice(1);
+
+    // Update URL
+    const newUrl = `${window.location.pathname}${queryString.length > 0 ? "?" : ""}${queryString}`;
+    window.history.pushState({ path: newUrl }, '', newUrl);
+
+    // Update movie list
+    // We use Promises, which can act as callbacks
+    // for asynchronous functions when they return
+    updateMovieList(queryParams);
+
+    // Update elements except the next page button
+    // We exclude next page because their behavior is reliant on the
+    // completion of an async call (ajax)
+    // The next page element will update once totalPages has been computed
+    pageNumberElement.val(queryParams.page);
+    limitPerPageElement.val(queryParams.limit);
+    sortByElement.val(queryParams.sortBy);
+    prevPageElement.prop("disabled", queryParams.page === 1);
+    // nextPageElement.prop("disabled", queryParams.page === totalPages);
+}
+
+
+/*
+ * Begin reactive callbacks
+ */
+
+
+// Hyperlinks
+jQuery(document).on("click", "a", function() {
+    loadQueryParams();
+    propQueryParams();
+});
 
 // Handle sorting selection change
-jQuery("#sort-by").on("change", function() {
-    const queryParams = getQueryParams();
-    updateMovieList(queryParams);
-    updateUrl(queryParams);
+sortByElement.on("change", function() {
+    queryParams.sortBy = sortByElement.val()
+    propQueryParams();
 });
 
 // Handle page change
-jQuery("#prev-page").on("click", function() {
-    if (currentPage > 1) {
-        currentPage--;
-        const queryParams = getQueryParams();
-        updateMovieList(queryParams);
-        updateUrl(queryParams);
-        jQuery("#page-number").val(currentPage);
+prevPageElement.on("click", function() {
+    if (queryParams.page > 1) {
+        queryParams.page--;
+        propQueryParams();
     }
-    jQuery(this).prop("disabled", currentPage === 1);
 });
 
-jQuery("#next-page").on("click", function() {
-    currentPage++;
-    const queryParams = getQueryParams();
-    updateMovieList(queryParams);
-    updateUrl(queryParams);
-    jQuery("#page-number").val(currentPage);
-    jQuery(this).prop("disabled", currentPage === totalPages);
+nextPageElement.on("click", function() {
+    if (queryParams.page < totalPages) {
+        queryParams.page++;
+        propQueryParams();
+    }
 });
 
 // Handle limit (movies per page) change
-jQuery("#limit-per-page").on("change", function() {
-    currentLimit = parseInt(jQuery(this).val(), 10); // Update the limit
-    currentPage = 1; // Reset to the first page when changing limit
-    jQuery("#page-number").val(currentPage); // Update the page input to display 1
-    const queryParams = getQueryParams();
-    updateMovieList(queryParams);
-    updateUrl(queryParams);
-    jQuery("#prev-page").prop("disabled", true);
-    jQuery("#next-page").prop("disabled", false);
+limitPerPageElement.on("change", function() {
+    queryParams.limit = parseInt(limitPerPageElement.val(), 10);  // Update the limit
+    queryParams.page = 1; // Reset to the first page when changing limit
+    propQueryParams();
 });
 
 // Handle page jump via input field
-jQuery("#page-number").on("change", function() {
-    let requestedPage = parseInt(jQuery(this).val(), 10);
+pageNumberElement.on("change", function() {
+    let requestedPage = parseInt(pageNumberElement.val(), 10);
     if (requestedPage < 1) {
         requestedPage = 1;
     } else if (requestedPage > totalPages) {
-    requestedPage = totalPages;
+        requestedPage = totalPages;
     }
-
-    currentPage = requestedPage;
-    jQuery(this).val(currentPage);
-
-    const queryParams = getQueryParams();
-    updateMovieList(queryParams);
-    updateUrl(queryParams);
-    jQuery("#prev-page").prop("disabled", currentPage === 1);
-    jQuery("#next-page").prop("disabled", currentPage === totalPages);
+    queryParams.page = requestedPage;
+    propQueryParams();
 });
 
-function updateUrl(queryParams) {
-    // Update the URL with the new query params, preserving the current state
-    const newUrl = `${window.location.pathname}?${queryParams}`;
-    window.history.pushState({ path: newUrl }, '', newUrl);
-}
+// Results button
+resultsBtnElement.on("click", function(event) {
+    event.preventDefault();
+    const movieListState = sessionStorage.getItem("movieListState");
+    let queryString = "";
+    if (movieListState) {
+        const state = JSON.parse(movieListState);
+        queryString = `&limit=${state.limit}&page=${state.page}&sortBy=${state.sortBy}`;
+        if (state.title) {
+            queryParams += `&title=${state.currentTitle}`;
+        }
+        if (state.year) {
+            queryParams += `&year=${state.currentYear}`;
+        }
+        if (state.director) {
+            queryParams += `&director=${state.director}`;
+        }
+        if (state.star) {
+            queryParams += `&star=${state.star}`;
+        }
+        if (state.alpha) {
+            queryParams += `&alpha=${state.alpha}`;
+        }
+        if (state.genre) {
+            queryParams += `&genre=${state.genre}`;
+        }
+    }
+    window.location.href = `movielist.html?${queryString}`;
+});
 
+// Add to cart buttons
 $(document).on('click', '.add-to-cart', function() {
     let movieId = $(this).data('id');
     $.ajax({
@@ -296,43 +301,16 @@ $(document).on('click', '.add-to-cart', function() {
     });
 });
 
-jQuery("#results-btn").on("click", function(event) {
-    event.preventDefault();
 
-    const movieListState = sessionStorage.getItem("movieListState");
-    let queryParams = "";
-    if (movieListState) {
-        const state = JSON.parse(movieListState);
-        queryParams = `&limit=${state.currentLimit}&page=${state.currentPage}&sortBy=${state.currentSortBy}`;
-        if (state.currentTitle) {
-            queryParams += `&title=${state.currentTitle}`;
-        }
-        if (state.currentYear) {
-            queryParams += `&year=${state.currentYear}`;
-        }
-        if (state.currentDirector) {
-            queryParams += `&director=${state.currentDirector}`;
-        }
-        if (state.currentStar) {
-            queryParams += `&star=${state.currentStar}`;
-        }
-        if (state.currentAlpha) {
-            queryParams += `&alpha=${state.currentAlpha}`;
-        }
-        if (state.currentGenre) {
-            queryParams += `&genre=${state.currentGenre}`;
-        }
-    }
+/* End reactive callbacks */
 
-    window.location.href = `movielist.html?${queryParams}`;
-});
 
 /**
  * Once this .js is loaded, the following scripts will be executed by the browser.
  */
 jQuery(document).ready(() => {
-    restoreState();
-    const queryParams = getQueryParams();
+    loadQueryParams();
+    propQueryParams();
     console.log("Initial queryParams: ", queryParams);
-    updateMovieList(queryParams);
+    console.log("Initial queryString: ", queryString);
 });

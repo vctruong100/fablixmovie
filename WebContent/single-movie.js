@@ -48,32 +48,7 @@ jQuery("#add-to-cart").on("click", function() {
 });
 
 function backToList() {
-    const movieListState = sessionStorage.getItem("movieListState");
-    let queryParams = "";
-    if (movieListState) {
-        const state = JSON.parse(movieListState);
-        queryParams = `&limit=${state.currentLimit}&page=${state.currentPage}&sortBy=${state.currentSortBy}`;
-        if (state.currentTitle) {
-            queryParams += `&title=${state.currentTitle}`;
-        }
-        if (state.currentYear) {
-            queryParams += `&year=${state.currentYear}`;
-        }
-        if (state.currentDirector) {
-            queryParams += `&director=${state.currentDirector}`;
-        }
-        if (state.currentStar) {
-            queryParams += `&star=${state.currentStar}`;
-        }
-        if (state.currentAlpha) {
-            queryParams += `&alpha=${state.currentAlpha}`;
-        }
-        if (state.currentGenre) {
-            queryParams += `&genre=${state.currentGenre}`;
-        }
-    }
-
-    window.location.href = `movielist.html?${queryParams}`;
+    window.location.href = `movielist.html`;
 }
 
 
