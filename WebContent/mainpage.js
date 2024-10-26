@@ -12,7 +12,7 @@ function handleGenreResult(resultData) {
 // Populate the alphabet list for title browsing
 function handleAlphabetList() {
     let alphabetListElement = jQuery("#alphabet_list");
-    const alphabet = [...'ABCDEFGHIJKLMNOPQRSTUVWXYZ*'];
+    const alphabet = [...'0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ*'];
 
     alphabet.forEach(letter => {
         let letterHTML = `<li><a href="${resultsUrl}&alpha=${letter}">${letter}</a></li>`;

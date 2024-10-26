@@ -59,10 +59,10 @@ function handleMovieResult(resultData) {
     // Total number of movies found for this search result only
     // Does not count ALL movies
     let count = parseInt(resultData.count);
-    totalPages = Math.ceil(count / queryParams.limit) || 1;
+    totalPages = Math.ceil(count / parseInt(queryParams.limit)) || 1;
 
     // Update nextPage button after total pages has been computed
-    nextPageElement.prop("disabled", queryParams.page === totalPages);
+    nextPageElement.prop("disabled", parseInt(queryParams.page) >= totalPages);
 
     let movies = resultData.results;
     if (Array.isArray(movies)) {
@@ -151,7 +151,7 @@ function loadQueryParams() {
             queryParams.page = 1; // always start at first page
         }
         if (queryParams.limit === null) {
-            queryParams.limit = savedState.limit || 10;
+            queryParams.limit = parseInt(savedState.limit) || 10;
         }
         if (queryParams.sortBy === null) {
             queryParams.sortBy = savedState.sortBy || "title-asc-rating-asc";
@@ -183,8 +183,6 @@ function propQueryParams() {
     window.history.pushState({ path: newUrl }, '', newUrl);
 
     // Update movie list
-    // We use Promises, which can act as callbacks
-    // for asynchronous functions when they return
     updateMovieList(queryParams);
 
     // Update elements except the next page button
@@ -194,8 +192,8 @@ function propQueryParams() {
     pageNumberElement.val(queryParams.page);
     limitPerPageElement.val(queryParams.limit);
     sortByElement.val(queryParams.sortBy);
-    prevPageElement.prop("disabled", queryParams.page === 1);
-    // nextPageElement.prop("disabled", queryParams.page === totalPages);
+    prevPageElement.prop("disabled", parseInt(queryParams.page) === 1);
+    // nextPageElement.prop("disabled", parseInt(queryParams.page) >= totalPages);
 }
 
 
@@ -218,6 +216,7 @@ sortByElement.on("change", function() {
 
 // Handle page change
 prevPageElement.on("click", function() {
+    queryParams.page = parseInt(queryParams.page);
     if (queryParams.page > 1) {
         queryParams.page--;
         propQueryParams();
@@ -225,6 +224,7 @@ prevPageElement.on("click", function() {
 });
 
 nextPageElement.on("click", function() {
+    queryParams.page = parseInt(queryParams.page);
     if (queryParams.page < totalPages) {
         queryParams.page++;
         propQueryParams();
