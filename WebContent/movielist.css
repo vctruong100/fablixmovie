@@ -1,0 +1,96 @@
+@import 'shared.css';
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+}
+
+
+.sorting-controls {
+    margin: 20px 0;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+}
+
+.sorting-controls label {
+    margin-right: 10px;
+    color: #2e3a4e;
+    font-size: 16px;
+}
+
+.sorting-controls select {
+    padding: 8px 12px;
+    background-color: #f9fafc;
+    color: #2e3a4e;
+    border: 1px solid #cfd4d9;
+    border-radius: 5px;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.sorting-controls select:hover {
+    background-color: #e6ecf1;
+}
+
+.pagination-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 20px 0;
+}
+
+.pagination-controls button {
+    background-color: #4a90e2;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    text-align: center;
+    margin: 0 10px;
+    transition: background-color 0.3s ease;
+}
+
+.pagination-controls button:disabled {
+    background-color: #9ea7b3;
+    cursor: not-allowed;
+}
+
+.pagination-controls button:hover:not(:disabled) {
+    background-color: #357abd;
+}
+
+.pagination-controls select {
+    padding: 8px 12px;
+    background-color: #f9fafc;
+    color: #2e3a4e;
+    border: 1px solid #cfd4d9;
+    border-radius: 5px;
+    font-size: 14px;
+    cursor: pointer;
+    margin-left: 20px;
+}
+
+.pagination-controls select:hover {
+    background-color: #e6ecf1;
+}
+
+.pagination-controls input[type="number"] {
+    width: 60px;
+    padding: 8px;
+    background-color: #f9fafc;
+    color: #2e3a4e;
+    border: 1px solid #cfd4d9;
+    border-radius: 5px;
+    font-size: 14px;
+    text-align: center;
+    margin: 0 10px;
+}
+
+.pagination-controls input[type="number"]:focus {
+    outline: none;
+    background-color: #e6ecf1;
+}

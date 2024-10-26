@@ -1,0 +1,19 @@
+@import 'shared.css';
+
+#cart-table {
+    width: 100%;
+}
+
+#cart-items-body {
+    background-color: #ffffff;
+}
+
+#total-price {
+    font-size: 20px;
+    font-weight: bold;
+    color: #4a90e2;
+}
+
+button#proceed-to-payment {
+    margin-top: 20px;
+}
