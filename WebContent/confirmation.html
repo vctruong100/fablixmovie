@@ -4,10 +4,26 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Order Confirmation</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-<h1>Thank you for your order!</h1>
-<p>Your order has been successfully placed.</p>
-<a href="mainpage.html">Return to Home</a>
+<nav class="navbar">
+    <div class="navbar-links">
+        <a href="mainpage.html">Home</a>
+        <a href="movielist.html">Movie List</a>
+        <a href="shoppingcart.html">Checkout</a>
+    </div>
+</nav>
+
+<div class="container centered-page">
+    <h1>Order Confirmed</h1>
+    <p class="summary-text">Thank you for your purchase! Your order has been successfully placed.</p>
+    <div class="confirmation-message">
+        <p>We hope you enjoy your movies!</p>
+    </div>
+    <div class="button-container">
+        <a href="movielist.html" class="button-link">Continue Shopping</a>
+    </div>
+</div>
 </body>
 </html>

@@ -20,6 +20,11 @@ function handleAlphabetList() {
     });
 }
 
+jQuery("#results-btn").on("click", function(event) {
+    event.preventDefault();
+    window.location.href = `movielist.html`;
+});
+
 jQuery(document).ready(() => {
     // Load genres from MainPageServlet
     jQuery.ajax({

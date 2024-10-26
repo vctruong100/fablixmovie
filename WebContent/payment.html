@@ -17,27 +17,38 @@
     </div>
 </nav>
 
-<div class="container">
-    <h1>Payment Information</h1>
-    <p>Total Price: <span id="total-price">$0.00</span></p>
+<div class="container centered-page">
+    <h1>Secure Payment</h1>
+    <p class="summary-text">Complete your order by filling in your payment details below.</p>
+    <div class="order-summary">
+        <p>Total Price: <span id="total-price">$0.00</span></p>
+    </div>
 
-    <form id="payment-form">
-        <label for="first-name">First Name:</label>
-        <input type="text" id="first-name" name="firstName" required><br>
+    <form id="payment-form" class="form">
+        <div class="input-box">
+            <label for="first-name">First Name:</label>
+            <input type="text" id="first-name" name="firstName" required>
+        </div>
 
-        <label for="last-name">Last Name:</label>
-        <input type="text" id="last-name" name="lastName" required><br>
+        <div class="input-box">
+            <label for="last-name">Last Name:</label>
+            <input type="text" id="last-name" name="lastName" required>
+        </div>
 
-        <label for="credit-card-number">Credit Card Number:</label>
-        <input type="text" id="credit-card-number" name="creditCardNumber" required><br>
+        <div class="input-box">
+            <label for="credit-card-number">Credit Card Number:</label>
+            <input type="text" id="credit-card-number" name="creditCardNumber" required maxlength="19" placeholder="1234 5678 9012 3456">
+        </div>
 
-        <label for="expiration-date">Expiration Date (YYYY-MM):</label>
-        <input type="text" id="expiration-date" name="expirationDate" required><br>
+        <div class="input-box">
+            <label for="expiration-date">Expiration Date (YYYY-MM-DD):</label>
+            <input type="text" id="expiration-date" name="expirationDate" required placeholder="YYYY-MM-DD">
+        </div>
 
-        <button type="submit">Place Order</button>
+        <button type="submit" class="login-btn">Place Order</button>
     </form>
 
-    <div id="error-message"></div>
+    <div id="error-message" class="error-message"></div>
 </div>
 </body>
 </html>
