@@ -29,10 +29,13 @@ function handleMovieResult(resultData) {
             "</a></li>";
         movieStarsElement.append(starItem);
     }
+
+    jQuery(".add-to-cart").attr("data-id", resultData["movie_id"]);
+
 }
 
 
-jQuery("#add-to-cart").on("click", function() {
+$(document).on('click', '.add-to-cart', function() {
     let movieId = $(this).data('id');
     $.ajax({
         url: "api/shoppingcart",
