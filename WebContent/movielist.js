@@ -259,22 +259,22 @@ resultsBtnElement.on("click", function(event) {
         const state = JSON.parse(movieListState);
         queryString = `&limit=${state.limit}&page=${state.page}&sortBy=${state.sortBy}`;
         if (state.title) {
-            queryParams += `&title=${state.currentTitle}`;
+            queryString += `&title=${state.title}`;
         }
         if (state.year) {
-            queryParams += `&year=${state.currentYear}`;
+            queryString += `&year=${state.year}`;
         }
         if (state.director) {
-            queryParams += `&director=${state.director}`;
+            queryString += `&director=${state.director}`;
         }
         if (state.star) {
-            queryParams += `&star=${state.star}`;
+            queryString += `&star=${state.star}`;
         }
         if (state.alpha) {
-            queryParams += `&alpha=${state.alpha}`;
+            queryString += `&alpha=${state.alpha}`;
         }
         if (state.genre) {
-            queryParams += `&genre=${state.genre}`;
+            queryString += `&genre=${state.genre}`;
         }
     }
     window.location.href = `movielist.html?${queryString}`;
