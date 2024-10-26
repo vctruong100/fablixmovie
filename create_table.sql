@@ -83,3 +83,13 @@ CREATE TABLE IF NOT EXISTS prices(
 	price decimal(5,2) not null,
 	foreign key(movieId) references movies(id)
 );
+
+-- create sales records table
+CREATE TABLE IF NOT EXISTS sales_records(
+    saleId integer not null,
+    movieId varchar(10) not null,
+    salePrice decimal(5,2) not null,
+    quantity integer not null,
+    foreign key(saleId) references sales(id),
+    foreign key(movieId) references movies(id)
+);
