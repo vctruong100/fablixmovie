@@ -5,7 +5,10 @@ $(document).ready(function() {
             method: "GET",
             dataType: "json",
             success: function(data) {
-                $('#total-price').text(`$${data.totalPrice.toFixed(2)}`);
+                $('#total-price').text(`$${data.totalPrice}`);
+            },
+            error: function() {
+                $('#total-price').text("Error loading total price.");
             }
         });
     }
@@ -23,14 +26,18 @@ $(document).ready(function() {
         $.ajax({
             url: "api/payment",
             method: "POST",
-            data: paymentData,
+            data: $.param(paymentData),
             dataType: "json",
             success: function(response) {
+                console.log("Success: " + response);
                 if (response.status === "success") {
-                    window.location.href = "order-confirmation.html";
+                    window.location.href = "confirmation.html";
                 } else {
                     $('#error-message').text(response.message);
                 }
+            },
+            error: function() {
+                $('#error-message').text("An unexpected error occurred. Please try again.");
             }
         });
     });

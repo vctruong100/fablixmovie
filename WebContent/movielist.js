@@ -234,7 +234,6 @@ nextPageElement.on("click", function() {
 // Handle limit (movies per page) change
 limitPerPageElement.on("change", function() {
     queryParams.limit = parseInt(limitPerPageElement.val(), 10);  // Update the limit
-    queryParams.page = 1; // Reset to the first page when changing limit
     propQueryParams();
 });
 

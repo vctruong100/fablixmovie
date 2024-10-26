@@ -5,6 +5,7 @@ $(document).ready(function() {
             method: "GET",
             dataType: "json",
             success: function(data) {
+                console.log("Cart data:", data);
                 let cartItems = data.items;
                 let totalPrice = data.totalPrice;
                 let cartTableBody = $('#cart-items-body');
@@ -14,18 +15,22 @@ $(document).ready(function() {
                     cartItems.forEach(item => {
                         let rowHTML = `
                             <tr>
-                                <td>${item.title}</td>
-                                <td><button class="decrease-quantity" data-id="${item.movieId}">-</button>
+                                <td>${item.title || "No Title Available"}</td>
+                                <td>
+                                    <button class="decrease-quantity" data-id="${item.movieId}">-</button>
                                     ${item.quantity}
-                                    <button class="increase-quantity" data-id="${item.movieId}">+</button></td>
-                                <td>$${item.price.toFixed(2)}</td>
-                                <td>$${item.total.toFixed(2)}</td>
+                                    <button class="increase-quantity" data-id="${item.movieId}">+</button>
+                                </td>
+                                <td>$${item.price}</td>
+                                <td>$${item.total}</td>
                                 <td><button class="remove-item" data-id="${item.movieId}">Remove</button></td>
                             </tr>`;
                         cartTableBody.append(rowHTML);
                     });
+                } else {
+                    cartTableBody.append("<tr><td colspan='5'>Your cart is empty.</td></tr>");
                 }
-                $('#total-price').text(`$${totalPrice.toFixed(2)}`);
+                $('#total-price').text(`$${totalPrice}`);
             }
         });
     }
@@ -35,7 +40,10 @@ $(document).ready(function() {
             url: "api/shoppingcart",
             method: "POST",
             data: { movieId: movieId, action: action },
-            success: loadCart
+            success: loadCart,
+            error: function() {
+                alert("Failed to update cart. Please try again.");
+            }
         });
     }
 
