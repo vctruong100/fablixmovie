@@ -13,10 +13,8 @@ import javax.sql.DataSource;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.math.BigDecimal;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
+import java.util.Map;
 
 @WebServlet(name = "PaymentServlet", urlPatterns = "/api/payment")
 public class PaymentServlet extends HttpServlet {
@@ -72,16 +70,56 @@ public class PaymentServlet extends HttpServlet {
         System.out.println("Credit Card Number: " + creditCardNumber);
         System.out.println("Expiration Date: " + expirationDate);
 
+        System.out.println("Payment processing...");
         if (isPaymentValid) {
-            responseObject.addProperty("status", "success");
-            responseObject.addProperty("message", "Payment processed successfully");
+            String saleInsertQuery = "INSERT INTO sales (customerId, movieId, saleDate) VALUES (?, ?, NOW())";
+            System.out.println("Payment is valid");
+            try (Connection conn = dataSource.getConnection()) {
+                conn.setAutoCommit(false);
 
-            scSession.clearCart();
+                PreparedStatement saleStmt = conn.prepareStatement(saleInsertQuery, Statement.RETURN_GENERATED_KEYS);
+
+                int customerId = getCustomerId(request.getSession().getAttribute("username"));
+
+                System.out.println("Customer ID: " + customerId);
+                for (Map.Entry<String, ShoppingCartSession.CartItem> entry : scSession.getShoppingCart().entrySet()) {
+                    String movieId = entry.getKey();
+                    int quantity = entry.getValue().quantity;
+                    BigDecimal price = entry.getValue().price;
+
+                    saleStmt.setInt(1, customerId);
+                    saleStmt.setString(2, movieId);
+                    saleStmt.executeUpdate();
+
+                    ResultSet rs = saleStmt.getGeneratedKeys();
+                    if (rs.next()) {
+                        int saleId = rs.getInt(1);
+                        System.out.println("Sale ID: " + saleId);
+                        String saleRecordInsertQuery = "INSERT INTO sales_records (saleId, movieId, salePrice, quantity) VALUES (?, ?, ?, ?)";
+                        try (PreparedStatement saleRecordStmt = conn.prepareStatement(saleRecordInsertQuery)) {
+                            saleRecordStmt.setInt(1, saleId);
+                            saleRecordStmt.setString(2, movieId);
+                            saleRecordStmt.setBigDecimal(3, price);
+                            saleRecordStmt.setInt(4, quantity);
+                            saleRecordStmt.executeUpdate();
+                        }
+                    }
+                }
+                conn.commit();
+                responseObject.addProperty("status", "success");
+                responseObject.addProperty("message", "Payment processed successfully.");
+                scSession.clearCart();
+            } catch (SQLException e) {
+                e.printStackTrace();
+                responseObject.addProperty("status", "error");
+                responseObject.addProperty("message", "An error occurred during the transaction. Please try again.");
+            }
         } else {
             responseObject.addProperty("status", "error");
             responseObject.addProperty("message", "Invalid payment details");
         }
 
+        System.out.println("Payment processed");
         PrintWriter out = response.getWriter();
         out.write(responseObject.toString());
         out.close();
@@ -110,5 +148,20 @@ public class PaymentServlet extends HttpServlet {
 
         return valid;
     }
+    private int getCustomerId(Object username) throws SQLException {
+        int customerId = -1;
+        String customerQuery = "SELECT id FROM customers WHERE email = ?";
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement statement = conn.prepareStatement(customerQuery)) {
+            statement.setString(1, (String) username);
+            ResultSet rs = statement.executeQuery();
+            if (rs.next()) {
+                customerId = rs.getInt("id");
+            }
+        }
+        return customerId;
+    }
 
 }
+
+
