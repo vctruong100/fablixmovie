@@ -17,6 +17,7 @@ import session.ShoppingCartSession.CartItem;
 import javax.sql.DataSource;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -47,7 +48,7 @@ public class ShoppingCartServlet extends HttpServlet {
 
         Map<String, CartItem> cart = scSession.getShoppingCart();
 
-        double totalPrice = 0.0;
+        BigDecimal totalPrice;
         JsonArray itemsArray = new JsonArray();
 
         if (!cart.isEmpty()) {
@@ -58,7 +59,7 @@ public class ShoppingCartServlet extends HttpServlet {
 
                     JsonObject movieObject = new JsonObject();
                     MovieQuery movieQuery = new MovieQuery(movieId);
-                    MovieResultProc mrp =new MovieResultProc(movieObject);
+                    MovieResultProc mrp = new MovieResultProc(movieObject);
 
                     PreparedStatement mStatement = movieQuery.prepareStatement(conn);
                     mrp.processResultSet(mStatement.executeQuery());
@@ -75,7 +76,7 @@ public class ShoppingCartServlet extends HttpServlet {
 
         JsonObject responseObject = new JsonObject();
         responseObject.add("items", itemsArray);
-        responseObject.addProperty("totalPrice", totalPrice);
+        responseObject.addProperty("totalPrice", totalPrice.toPlainString());
 
         PrintWriter out = response.getWriter();
         out.write(responseObject.toString());
@@ -91,8 +92,6 @@ public class ShoppingCartServlet extends HttpServlet {
         ShoppingCartSession scSession = (ShoppingCartSession)
                 request.getSession().getAttribute("shoppingCart");
 
-        Map<String, CartItem> cart = scSession.getShoppingCart();
-
         String action = request.getParameter("action");
         String movieId = request.getParameter("movieId");
 
@@ -103,7 +102,7 @@ public class ShoppingCartServlet extends HttpServlet {
 
         switch(action) {
             case "add":
-                double price = fetchPriceFromDatabase(movieId);
+                BigDecimal price = fetchPriceFromDatabase(movieId);
                 scSession.addToCart(movieId, price);
                 break;
             case "remove":
@@ -115,21 +114,21 @@ public class ShoppingCartServlet extends HttpServlet {
         response.sendRedirect("shoppingcart");
     }
 
-    private double fetchPriceFromDatabase(String movieId) {
-        double price = 0.0;
+    private BigDecimal fetchPriceFromDatabase(String movieId) {
         try (Connection conn = dataSource.getConnection()) {
             String query = "SELECT price FROM prices WHERE movieId = ?";
             try (PreparedStatement statement = conn.prepareStatement(query)) {
                 statement.setString(1, movieId);
                 try (ResultSet rs = statement.executeQuery()) {
                     if (rs.next()) {
-                        price = rs.getDouble("price");
+                        return rs.getBigDecimal("price");
                     }
                 }
             }
         } catch (SQLException e) {
             e.printStackTrace();
+
         }
-        return price;
+        return new BigDecimal("0.00");
     }
 }

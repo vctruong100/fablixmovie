@@ -1,5 +1,7 @@
 package session;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -8,9 +10,9 @@ public class ShoppingCartSession {
 
     public static class CartItem {
         public int quantity;
-        public double price;
+        public BigDecimal price;
 
-        public CartItem(int quantity, double price) {
+        public CartItem(int quantity, BigDecimal price) {
             this.quantity = quantity;
             this.price = price;
         }
@@ -22,7 +24,7 @@ public class ShoppingCartSession {
 
     public void clearCart() { shoppingCart.clear(); }
 
-    public void addToCart(String movieId, double price) {
+    public void addToCart(String movieId, BigDecimal price) {
         CartItem item = shoppingCart.getOrDefault(movieId, new CartItem(0, price));
         item.quantity++;
         shoppingCart.put(movieId, item);
@@ -43,13 +45,12 @@ public class ShoppingCartSession {
         }
     }
 
-    public double calculateTotalPrice() {
-        double totalPrice = 0.0;
-
+    public BigDecimal calculateTotalPrice() {
+        BigDecimal totalPrice = new BigDecimal("0.00")
+                .setScale(2, RoundingMode.HALF_UP);
         for (CartItem cartItem : shoppingCart.values()) {
-            totalPrice += cartItem.price * cartItem.quantity;
+            totalPrice = totalPrice.add(cartItem.price.multiply(new BigDecimal(cartItem.quantity)));
         }
-
         return totalPrice;
     }
 

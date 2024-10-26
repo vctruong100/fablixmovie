@@ -5,6 +5,7 @@ import com.google.gson.JsonObject;
 import query.MovieGenresQuery;
 import query.MovieStarsQuery;
 
+import java.math.BigDecimal;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -40,6 +41,16 @@ public class MovieResultProc extends BaseResultProc {
             String movieNumVotes = rs.getString("r.numVotes");
             String moviePrice = rs.getString("p.price");
 
+            /*
+             * To avoid floating point precision errors on the client,
+             * we add a moviePriceCents field for proper summation of the total price
+             * on the client side
+             */
+            BigDecimal moviePriceDecimal  = rs.getBigDecimal("p.price");
+            BigDecimal moviePriceCents = moviePriceDecimal.multiply(new BigDecimal(100));
+            String moviePriceCentsString = moviePriceCents.toString();
+
+
             /* process genres */
             MovieGenresQuery mgQuery = new MovieGenresQuery(movieId);
             if (genreLimit > 0) {
@@ -70,6 +81,7 @@ public class MovieResultProc extends BaseResultProc {
             result.addProperty("movie_rating", movieRating);
             result.addProperty("movie_num_votes", movieNumVotes);
             result.addProperty("movie_price", moviePrice);
+            result.addProperty("movie_price_cents", moviePriceCentsString);
             result.add("movie_genres", genres);
             result.add("movie_stars", stars);
 

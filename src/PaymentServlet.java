@@ -5,7 +5,6 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
 import session.ShoppingCartSession;
 
 import javax.naming.InitialContext;
@@ -13,6 +12,7 @@ import javax.naming.NamingException;
 import javax.sql.DataSource;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -39,10 +39,10 @@ public class PaymentServlet extends HttpServlet {
         ShoppingCartSession scSession = (ShoppingCartSession)
                 request.getSession().getAttribute("shoppingCart");
 
-        double totalPrice = scSession.calculateTotalPrice();
+        BigDecimal totalPrice = scSession.calculateTotalPrice();
 
         JsonObject responseObject = new JsonObject();
-        responseObject.addProperty("totalPrice", totalPrice);
+        responseObject.addProperty("totalPrice", totalPrice.toPlainString());
 
         PrintWriter out = response.getWriter();
         out.write(responseObject.toString());
