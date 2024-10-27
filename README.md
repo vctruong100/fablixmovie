@@ -9,7 +9,7 @@ Note: I initially typed "tern" instead of "term" in the search bar, resulting in
 I redid the entire search to demonstrate that it functions correctly.
 
 ## Contributions
-### Vin
+### Vinh
 - Implemented MainPageServlet, ShoppingCartServlet, and PaymentServlet
 - Developed JavaScript (JS) and HTML for payment, shopping cart, and confirmation pages
 - Helped extend the Movie List feature on the front end
