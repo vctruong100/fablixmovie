@@ -18,23 +18,29 @@ public class ShoppingCartSession {
         }
     }
 
-    public Map<String, CartItem> getShoppingCart() {
-        return shoppingCart;
+    public synchronized Map<String, CartItem> getShoppingCart() {
+        Map<String, CartItem> dcopy = new HashMap<>();
+        for (Map.Entry<String, CartItem> entry : shoppingCart.entrySet()) {
+            CartItem originalItem = entry.getValue();
+            CartItem copiedItem = new CartItem(originalItem.quantity, originalItem.price);
+            dcopy.put(entry.getKey(), copiedItem);
+        }
+        return dcopy;
     }
 
-    public void clearCart() { shoppingCart.clear(); }
+    public synchronized void clearCart() { shoppingCart.clear(); }
 
-    public void addToCart(String movieId, BigDecimal price) {
+    public synchronized void addToCart(String movieId, BigDecimal price) {
         CartItem item = shoppingCart.getOrDefault(movieId, new CartItem(0, price));
         item.quantity++;
         shoppingCart.put(movieId, item);
     }
 
-    public void removeFromCart(String movieId) {
+    public synchronized void removeFromCart(String movieId) {
         shoppingCart.remove(movieId);
     }
 
-    public void decreaseCartItem(String movieId) {
+    public synchronized void decreaseCartItem(String movieId) {
         CartItem item = shoppingCart.get(movieId);
         if (item != null) {
             if (item.quantity > 1) {
