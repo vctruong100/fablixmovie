@@ -22,6 +22,20 @@ public class PaymentServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
     private DataSource dataSource;
 
+    private static class CustomerInfo {
+        int customerId;
+        String firstName;
+        String lastName;
+        String ccId;
+
+        public CustomerInfo(int customerId, String firstName, String lastName, String ccId) {
+            this.customerId = customerId;
+            this.firstName = firstName;
+            this.lastName = lastName;
+            this.ccId = ccId;
+        }
+    }
+
     public void init(ServletConfig config) throws ServletException {
         try {
             dataSource = (DataSource) new InitialContext().lookup("java:comp/env/jdbc/moviedb");
@@ -57,12 +71,15 @@ public class PaymentServlet extends HttpServlet {
         ShoppingCartSession scSession = (ShoppingCartSession)
                 request.getSession().getAttribute("shoppingCart");
 
+        CustomerInfo cInfo = getCustomerInfo(
+                request.getSession().getAttribute("username"));
         String firstName = request.getParameter("firstName");
         String lastName = request.getParameter("lastName");
         String creditCardNumber = request.getParameter("creditCardNumber");
         String expirationDate = request.getParameter("expirationDate");
 
-        boolean isPaymentValid = validatePayment(firstName, lastName, creditCardNumber, expirationDate);
+        boolean isPaymentValid = validatePayment(
+                cInfo, firstName, lastName, creditCardNumber, expirationDate);
 
         JsonObject responseObject = new JsonObject();
 
@@ -84,7 +101,7 @@ public class PaymentServlet extends HttpServlet {
 
                 // Get details to add to the initial sale record
                 // for the sales table
-                int customerId = getCustomerId(request.getSession().getAttribute("username"));
+                int customerId = cInfo.customerId;
                 String firstMovieId = shoppingCart.entrySet().iterator().next().getKey();
 
                 // Insert a single sale record into the sales table
@@ -175,12 +192,24 @@ public class PaymentServlet extends HttpServlet {
         out.close();
     }
 
-    private boolean validatePayment(String firstName, String lastName, String creditCardNumber, String expirationDate) {
+    private boolean validatePayment(
+            CustomerInfo cInfo,
+            String firstName,
+            String lastName,
+            String creditCardNumber,
+            String expirationDate) {
         boolean valid = false;
+
+        // Does not match first name / last name on customer info
+        if (!firstName.equals(cInfo.firstName) ||
+            !lastName.equals(cInfo.lastName)) {
+            return false;
+        }
 
         // Connect to the database to validate the payment information
         try (Connection conn = dataSource.getConnection()) {
-            String query = "SELECT * FROM creditcards WHERE firstName = ? AND lastName = ? AND id = ? AND expiration = ?";
+            String query = "SELECT * FROM creditcards "
+                    + "WHERE firstName = ? AND lastName = ? AND id = ? AND expiration = ?";
             try (PreparedStatement statement = conn.prepareStatement(query)) {
                 statement.setString(1, firstName);
                 statement.setString(2, lastName);
@@ -189,7 +218,9 @@ public class PaymentServlet extends HttpServlet {
 
                 ResultSet rs = statement.executeQuery();
                 if (rs.next()) {
-                    valid = true;
+                    // Only valid if customer info ccId matches
+                    // credit card supplied by the user
+                    valid = (rs.getString("id").equals(cInfo.ccId));
                 }
             }
         } catch (SQLException e) {
@@ -198,18 +229,25 @@ public class PaymentServlet extends HttpServlet {
 
         return valid;
     }
-    private int getCustomerId(Object username) throws SQLException {
-        int customerId = -1;
-        String customerQuery = "SELECT id FROM customers WHERE email = ?";
+
+    private CustomerInfo getCustomerInfo(Object username) {
+        String customerQuery = "SELECT id, firstName, lastName, ccId FROM customers WHERE email = ?";
         try (Connection conn = dataSource.getConnection();
              PreparedStatement statement = conn.prepareStatement(customerQuery)) {
             statement.setString(1, (String) username);
             ResultSet rs = statement.executeQuery();
             if (rs.next()) {
-                customerId = rs.getInt("id");
+                return new CustomerInfo(
+                        rs.getInt("id"),
+                        rs.getString("firstName"),
+                        rs.getString("lastName"),
+                        rs.getString("ccId")
+                );
             }
+        } catch(Exception e) {
+            return new CustomerInfo(-1, "", "", "");
         }
-        return customerId;
+        return new CustomerInfo(-1, "", "", "");
     }
 
 }
