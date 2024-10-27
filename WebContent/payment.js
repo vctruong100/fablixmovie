@@ -31,6 +31,8 @@ $(document).ready(function() {
             success: function(response) {
                 console.log("Success: " + response);
                 if (response.status === "success") {
+                    sessionStorage.setItem('saleDetails', JSON.stringify(response.sales));
+                    sessionStorage.setItem('totalPrice', response.totalPrice);
                     window.location.href = "confirmation.html";
                 } else {
                     $('#error-message').text(response.message);

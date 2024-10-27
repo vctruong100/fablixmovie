@@ -6,7 +6,8 @@
     <title>Order Confirmation</title>
     <link rel="stylesheet" href="shared.css">
     <link rel="stylesheet" href="payment.css">
-    <script src="payment.js" defer></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="confirmation.js" defer></script>
 </head>
 <body>
 <nav class="navbar">
@@ -26,12 +27,19 @@
 <div class="container centered-page">
     <h1>Order Confirmed</h1>
     <p class="summary-text">Thank you for your purchase! Your order has been successfully placed.</p>
-    <div class="confirmation-message">
-        <p>We hope you enjoy your movies!</p>
-    </div>
-    <div class="button-container">
-        <a href="movielist.html" class="button-link">Continue Shopping</a>
-    </div>
+    <table id="order-details-table" class="movie-table">
+        <thead>
+        <tr>
+            <th>Movie Title</th>
+            <th>Quantity</th>
+            <th>Unit Price</th>
+            <th>Total Price</th>
+        </tr>
+        </thead>
+        <tbody id="cart-items-body">
+        </tbody>
+    </table>
+    <h3>Total Amount: <span id="total-price">$0.00</span></h3>
 </div>
 </body>
 </html>

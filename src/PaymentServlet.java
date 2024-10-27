@@ -1,3 +1,4 @@
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import jakarta.servlet.ServletConfig;
 import jakarta.servlet.ServletException;
@@ -40,6 +41,7 @@ public class PaymentServlet extends HttpServlet {
         BigDecimal totalPrice = scSession.calculateTotalPrice();
 
         JsonObject responseObject = new JsonObject();
+
         responseObject.addProperty("totalPrice", totalPrice.toPlainString());
 
         PrintWriter out = response.getWriter();
@@ -78,8 +80,8 @@ public class PaymentServlet extends HttpServlet {
                 conn.setAutoCommit(false);
 
                 PreparedStatement saleStmt = conn.prepareStatement(saleInsertQuery, Statement.RETURN_GENERATED_KEYS);
-
                 int customerId = getCustomerId(request.getSession().getAttribute("username"));
+                int saleId = -1;
 
                 System.out.println("Customer ID: " + customerId);
                 for (Map.Entry<String, ShoppingCartSession.CartItem> entry : scSession.getShoppingCart().entrySet()) {
@@ -93,7 +95,7 @@ public class PaymentServlet extends HttpServlet {
 
                     ResultSet rs = saleStmt.getGeneratedKeys();
                     if (rs.next()) {
-                        int saleId = rs.getInt(1);
+                        saleId = rs.getInt(1);
                         System.out.println("Sale ID: " + saleId);
                         String saleRecordInsertQuery = "INSERT INTO sales_records (saleId, movieId, salePrice, quantity) VALUES (?, ?, ?, ?)";
                         try (PreparedStatement saleRecordStmt = conn.prepareStatement(saleRecordInsertQuery)) {
@@ -106,9 +108,40 @@ public class PaymentServlet extends HttpServlet {
                     }
                 }
                 conn.commit();
+
+                // Retrieve sale details for confirmation page
+                String saleDetailsQuery = "SELECT m.title AS movieTitle, sr.quantity, sr.salePrice " +
+                        "FROM sales_records sr " +
+                        "JOIN movies m ON sr.movieId = m.id " +
+                        "WHERE sr.saleId = ?";
+                PreparedStatement saleDetailsStmt = conn.prepareStatement(saleDetailsQuery);
+                saleDetailsStmt.setInt(1, saleId);
+                ResultSet detailsRs = saleDetailsStmt.executeQuery();
+
+                JsonArray salesArray = new JsonArray();
+                BigDecimal totalPrice = BigDecimal.ZERO;
+
+                while (detailsRs.next()) {
+                    JsonObject saleItem = new JsonObject();
+                    saleItem.addProperty("movieTitle", detailsRs.getString("movieTitle"));
+                    saleItem.addProperty("quantity", detailsRs.getInt("quantity"));
+                    BigDecimal salePrice = detailsRs.getBigDecimal("salePrice");
+                    saleItem.addProperty("salePrice", salePrice.toPlainString());
+
+                    BigDecimal lineTotal = salePrice.multiply(BigDecimal.valueOf(detailsRs.getInt("quantity")));
+                    saleItem.addProperty("lineTotal", lineTotal.toPlainString());
+
+                    salesArray.add(saleItem);
+                    totalPrice = totalPrice.add(lineTotal);
+                }
+
                 responseObject.addProperty("status", "success");
                 responseObject.addProperty("message", "Payment processed successfully.");
+                responseObject.add("sales", salesArray);
+                responseObject.addProperty("totalPrice", totalPrice.toPlainString());
+
                 scSession.clearCart();
+
             } catch (SQLException e) {
                 e.printStackTrace();
                 responseObject.addProperty("status", "error");
