@@ -6,16 +6,23 @@
     <title>Order Confirmation</title>
     <link rel="stylesheet" href="shared.css">
     <link rel="stylesheet" href="payment.css">
+    <script src="payment.js" defer></script>
 </head>
 <body>
 <nav class="navbar">
     <div class="navbar-links">
         <a href="mainpage.html">Home</a>
-        <a href="movielist.html">Movie List</a>
+        <a id="results-btn" href="#">Movie List</a>
         <a href="shoppingcart.html">Checkout</a>
     </div>
+    <form id="search_form">
+        <input type="text" name="title" placeholder="Search by Title">
+        <input type="number" name="year" placeholder="Search by Year">
+        <input type="text" name="director" placeholder="Search by Director">
+        <input type="text" name="star" placeholder="Search by Star">
+        <button type="submit">Search</button>
+    </form>
 </nav>
-
 <div class="container centered-page">
     <h1>Order Confirmed</h1>
     <p class="summary-text">Thank you for your purchase! Your order has been successfully placed.</p>
