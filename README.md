@@ -1,10 +1,15 @@
 ## Demo
-https://www.youtube.com/watch?v=gUnYy8DNaRM
+Project 1: https://www.youtube.com/watch?v=gUnYy8DNaRM
+Project 2: https://www.youtube.com/watch?v=pr6Nns6dLvw
 
 ## Contributions
 ### Vinh
-- Implemented JS and HTML for Movie List (index), Single Star, and Single Movie
-- Implemented and integrated styles.css
+- Implemented MainPageServlet, ShoppingCartServlet, and PaymentServlet
+- Developed JavaScript (JS) and HTML for payment, shopping cart, and confirmation pages
+- Helped extend the Movie List feature on the front end
+- Created styles for each HTML page
+- Recorded the Demo video
+
 ### Jason
 - Implemented LoginServlet, SearchServlet, BrowseServlet
 - Designed the SQL queries for search / browsing
