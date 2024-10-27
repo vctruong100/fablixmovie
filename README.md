@@ -1,3 +1,6 @@
+## Project Styling and Extra Credits
+Beautified all pages with custom styles to meet extra credit requirements.
+
 ## Demo
 Project 1: https://www.youtube.com/watch?v=gUnYy8DNaRM
 
