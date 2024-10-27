@@ -25,7 +25,7 @@ public class MovieListQuery extends ConditionalQuery {
                 + "LEFT JOIN prices p ON m.id = p.movieId"
         );
         order = new String[2];
-        params = new String[9]; /* upper bound based on the final query string */
+        params = new String[6]; /* upper bound based on the final query string */
         orderByRatingTitle(OrderMode.DESC, OrderMode.ASC);
     }
 
@@ -37,14 +37,12 @@ public class MovieListQuery extends ConditionalQuery {
 
         /* search clauses */
         if (title != null && !title.isEmpty()) {
-            whereClauses.add("LOWER(m.title) LIKE LOWER(?) OR LOWER(m.title) LIKE LOWER(?)");
-            params[paramCount++] = title + "%";
-            params[paramCount++] = "% " + title + "%";
+            whereClauses.add("LOWER(m.title) LIKE LOWER(?)");
+            params[paramCount++] = "%" + title + "%";
         }
         if (director != null && !director.isEmpty()) {
-            whereClauses.add("LOWER(m.director) LIKE LOWER(?) OR LOWER(m.director) LIKE LOWER(?)");
-            params[paramCount++] = director + "%";
-            params[paramCount++] = "% " + director + "%";
+            whereClauses.add("LOWER(m.director) LIKE LOWER(?)");
+            params[paramCount++] = "%" + director + "%";
         }
         if (year != null && !year.isEmpty()) {
             whereClauses.add("m.year = ?");
@@ -53,9 +51,8 @@ public class MovieListQuery extends ConditionalQuery {
         if (star != null && !star.isEmpty()) {
             joinClauses.add("JOIN stars_in_movies sim ON m.id = sim.movieId");
             joinClauses.add("JOIN stars s ON sim.starId = s.id");
-            whereClauses.add("LOWER(s.name) LIKE LOWER(?) OR LOWER(s.name) LIKE LOWER(?)");
-            params[paramCount++] = star + "%";
-            params[paramCount++] = "% " + star + "%";
+            whereClauses.add("LOWER(s.name) LIKE LOWER(?)");
+            params[paramCount++] = "%" + star + "%";
         }
 
         /* browse clauses */

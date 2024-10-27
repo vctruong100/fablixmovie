@@ -18,11 +18,10 @@ https://www.youtube.com/watch?v=gUnYy8DNaRM
 - Searches movie by either title / director / star
 - Pattern matching implemented in `src/query/MovieListQuery.java`
 - Case insensitivity implemented by matching the lowercase column with the lowercase pattern
-- We use `LIKE` to match the column with `query%` or `% query%`, where `query` is replaced with the user's query
-- This matches columns that either start with the query or has a word that starts with the query
-- We didn't do `%query%` because `inter` could match titles with `Winter`, and it's not immediately obvious how they're related
+- We use `LIKE` to match the column with `%query%`, where `query` is replaced with the user's query
+- This matches columns where the substring exists
 - Examples:
-  - `inter` matches `Intermission` or `Divine Intervention` but not `Winter Tale`
+  - `inter` matches `Divine Intervention` or `Winter Tale`
   - `hell` matches `Comedy Hell` or `Hello, Goodbye!`
 
 ### Alpha (Browse by Title)
