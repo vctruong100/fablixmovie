@@ -1,9 +1,12 @@
 ## Demo
 Project 1: https://www.youtube.com/watch?v=gUnYy8DNaRM
-Project 2: https://www.youtube.com/watch?v=pr6Nns6dLvw
+
+Project 2: https://www.youtube.com/watch?v=kSFtYlGfwkM
+Note: I initially typed "tern" instead of "term" in the search bar, resulting in an incorrect movie item. 
+I redid the entire search to demonstrate that it functions correctly.
 
 ## Contributions
-### Vinh
+### Vin
 - Implemented MainPageServlet, ShoppingCartServlet, and PaymentServlet
 - Developed JavaScript (JS) and HTML for payment, shopping cart, and confirmation pages
 - Helped extend the Movie List feature on the front end
