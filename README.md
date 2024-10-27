@@ -6,8 +6,12 @@ https://www.youtube.com/watch?v=gUnYy8DNaRM
 - Implemented JS and HTML for Movie List (index), Single Star, and Single Movie
 - Implemented and integrated styles.css
 ### Jason
-- Did create_table.sql and set up other SQL scripts
-- Implemented SingleStarServlet, SingleMovieServlet, MovieListServlet
+- Implemented LoginServlet, SearchServlet, BrowseServlet
+- Designed the SQL queries for search / browsing
+- Extended Movie List, Single Star, Single Movie with proper stars & genres ordering according to spec
+- Jointly worked on supporting jumps from single pages to movie list
+- Modified DB schema to support prices and multiple movies per sale
+- Migrated existing DB with scripts to generate random prices for movies and associate existing sales with new sales records
 
 ## Substring Pattern Design
 ### Title / Director / Star (Search)
