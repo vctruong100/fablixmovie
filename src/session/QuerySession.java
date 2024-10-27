@@ -145,7 +145,7 @@ public class QuerySession {
                 qpSet.params = new String[]{alpha, genreId};
                 return qpSet;
             default:
-                return null;
+                return qpSet;
         }
     }
 

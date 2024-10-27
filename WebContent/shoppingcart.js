@@ -31,6 +31,7 @@ $(document).ready(function() {
                     cartTableBody.append("<tr><td colspan='5'>Your cart is empty.</td></tr>");
                 }
                 $('#total-price').text(`$${totalPrice}`);
+                $('#proceed-to-payment').prop("disabled", Math.abs(parseFloat(totalPrice)) <= Number.EPSILON)
             }
         });
     }

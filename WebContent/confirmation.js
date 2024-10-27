@@ -1,5 +1,6 @@
 $(document).ready(function() {
     function loadOrderDetails() {
+        let saleId = sessionStorage.getItem('saleId');
         let salesData = JSON.parse(sessionStorage.getItem('saleDetails'));
         let totalPrice = sessionStorage.getItem('totalPrice');
         let tableBody = $("#cart-items-body");
@@ -15,7 +16,7 @@ $(document).ready(function() {
             </tr>`;
             tableBody.append(rowHTML);
         });
-
+        $("#sale-id").text(`#${saleId}`)
         $("#total-price").text(`$${totalPrice}`);
     }
 

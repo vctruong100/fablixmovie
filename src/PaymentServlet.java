@@ -79,32 +79,48 @@ public class PaymentServlet extends HttpServlet {
             try (Connection conn = dataSource.getConnection()) {
                 conn.setAutoCommit(false);
 
-                PreparedStatement saleStmt = conn.prepareStatement(saleInsertQuery, Statement.RETURN_GENERATED_KEYS);
-                int customerId = getCustomerId(request.getSession().getAttribute("username"));
-                int saleId = -1;
+                Map<String, ShoppingCartSession.CartItem> shoppingCart =
+                        scSession.getShoppingCart();
 
+                // Get details to add to the initial sale record
+                // for the sales table
+                int customerId = getCustomerId(request.getSession().getAttribute("username"));
+                String firstMovieId = shoppingCart.entrySet().iterator().next().getKey();
+
+                // Insert a single sale record into the sales table
+                // at checkout
+                PreparedStatement saleStmt = conn.prepareStatement(
+                        saleInsertQuery, Statement.RETURN_GENERATED_KEYS);
+
+                saleStmt.setInt(1, customerId);
+                saleStmt.setString(2, firstMovieId);
+                saleStmt.executeUpdate();
+
+                // Get generated sale ID
+                int saleId;
+                ResultSet rs = saleStmt.getGeneratedKeys();
+                if (rs.next()) {
+                    saleId = rs.getInt(1);
+                } else {
+                    throw new RuntimeException("no sale ID generated");
+                }
+                System.out.println("Sale ID: " + saleId);
                 System.out.println("Customer ID: " + customerId);
-                for (Map.Entry<String, ShoppingCartSession.CartItem> entry : scSession.getShoppingCart().entrySet()) {
+
+                for (var entry : shoppingCart.entrySet()) {
                     String movieId = entry.getKey();
                     int quantity = entry.getValue().quantity;
                     BigDecimal price = entry.getValue().price;
-
-                    saleStmt.setInt(1, customerId);
-                    saleStmt.setString(2, movieId);
-                    saleStmt.executeUpdate();
-
-                    ResultSet rs = saleStmt.getGeneratedKeys();
-                    if (rs.next()) {
-                        saleId = rs.getInt(1);
-                        System.out.println("Sale ID: " + saleId);
-                        String saleRecordInsertQuery = "INSERT INTO sales_records (saleId, movieId, salePrice, quantity) VALUES (?, ?, ?, ?)";
-                        try (PreparedStatement saleRecordStmt = conn.prepareStatement(saleRecordInsertQuery)) {
-                            saleRecordStmt.setInt(1, saleId);
-                            saleRecordStmt.setString(2, movieId);
-                            saleRecordStmt.setBigDecimal(3, price);
-                            saleRecordStmt.setInt(4, quantity);
-                            saleRecordStmt.executeUpdate();
-                        }
+                    String saleRecordInsertQuery = "INSERT INTO sales_records (saleId, movieId, salePrice, quantity) "
+                            + "VALUES (?, ?, ?, ?)";
+                    try (PreparedStatement saleRecordStmt = conn.prepareStatement(saleRecordInsertQuery)) {
+                        saleRecordStmt.setInt(1, saleId);
+                        saleRecordStmt.setString(2, movieId);
+                        saleRecordStmt.setBigDecimal(3, price);
+                        saleRecordStmt.setInt(4, quantity);
+                        saleRecordStmt.executeUpdate();
+                    } catch(Exception e) {
+                        throw new RuntimeException("bad sales record insertion");
                     }
                 }
                 conn.commit();
@@ -138,6 +154,7 @@ public class PaymentServlet extends HttpServlet {
                 responseObject.addProperty("status", "success");
                 responseObject.addProperty("message", "Payment processed successfully.");
                 responseObject.add("sales", salesArray);
+                responseObject.addProperty("saleId", saleId);
                 responseObject.addProperty("totalPrice", totalPrice.toPlainString());
 
                 scSession.clearCart();
