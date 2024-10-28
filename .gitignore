@@ -174,3 +174,4 @@ buildNumber.properties
 .idea
 *.iml
 movie-data.sql
+stanford-movies/
