@@ -6,6 +6,7 @@
     <title>Login to Fablix</title>
     <link rel="stylesheet" href="shared.css">
     <link rel="stylesheet" href="login.css">
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 </head>
 <body>
 <div class="login-container">
@@ -20,13 +21,13 @@
                 <label for="password">Password</label>
                 <input name="password" id="password" placeholder="Enter Password" type="password" required>
             </div>
+            <!-- reCAPTCHA widget -->
+            <div class="g-recaptcha" data-sitekey="6LfxpXMqAAAAAG-GHoBy9nd9ZdaXD68RaFmT8sTF"></div>
             <input type="submit" value="Sign In" class="login-btn">
         </form>
-
         <div id="login_error_message"></div>
     </div>
 </div>
-
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
 <script src="./login.js"></script>
 </body>
