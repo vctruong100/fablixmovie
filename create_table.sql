@@ -93,3 +93,13 @@ CREATE TABLE IF NOT EXISTS sales_records(
     foreign key(saleId) references sales(id),
     foreign key(movieId) references movies(id)
 );
+
+CREATE TABLE IF NOT EXISTS employees(
+    email varchar(50) primary key,
+    password varchar(128) not null, -- 128 for encrypted password?
+    fullname varchar(100)
+);
+
+-- Sample employee
+INSERT INTO employees (email, password, fullname)
+VALUES ('classta@email.edu', 'classta', 'TA CS122B');

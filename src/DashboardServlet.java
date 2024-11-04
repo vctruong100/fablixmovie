@@ -4,7 +4,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
-@WebServlet(name = "DashboardServlet", urlPatterns = "/api/dashboard")
+@WebServlet(name = "DashboardServlet", urlPatterns = "/fab-project/_dashboard")
 public class DashboardServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
     }
