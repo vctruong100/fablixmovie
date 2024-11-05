@@ -35,6 +35,9 @@ public class DashboardServlet extends HttpServlet {
             case "addStar":
                 handleAddStar(request, response);
                 break;
+            case "addGenre":
+                handleAddGenre(request, response);
+                break;
             default:
                 JsonObject responseJson = new JsonObject();
                 responseJson.addProperty("status", "error");
@@ -120,6 +123,49 @@ public class DashboardServlet extends HttpServlet {
         }
     }
 
+    private void handleAddGenre(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        String genreName = request.getParameter("genreName");
+
+        try (Connection conn = dataSource.getConnection()) {
+            // Check if genre already exists
+            String selectGenreQuery = "SELECT id FROM genres WHERE name = ?";
+            try (PreparedStatement selectStmt = conn.prepareStatement(selectGenreQuery)) {
+                selectStmt.setString(1, genreName);
+                ResultSet rs = selectStmt.executeQuery();
+
+                if (rs.next()) {
+                    JsonObject responseJson = new JsonObject();
+                    responseJson.addProperty("status", "fail");
+                    responseJson.addProperty("message", "Genre already exists.");
+                    response.getWriter().write(responseJson.toString());
+                } else {
+                    // If genre does not exist, insert it
+                    String insertGenreQuery = "INSERT INTO genres (name) VALUES (?)";
+                    try (PreparedStatement insertStmt = conn.prepareStatement(insertGenreQuery)) {
+                        insertStmt.setString(1, genreName);
+                        int rowsAffected = insertStmt.executeUpdate();
+
+                        JsonObject responseJson = new JsonObject();
+                        if (rowsAffected > 0) {
+                            responseJson.addProperty("status", "success");
+                            responseJson.addProperty("message", "Genre added successfully.");
+                        } else {
+                            responseJson.addProperty("status", "fail");
+                            responseJson.addProperty("message", "Failed to add genre.");
+                        }
+                        response.getWriter().write(responseJson.toString());
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JsonObject responseJson = new JsonObject();
+            responseJson.addProperty("status", "error");
+            responseJson.addProperty("message", "Error adding genre: " + e.getMessage());
+            response.getWriter().write(responseJson.toString());
+        }
+    }
+
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
         response.setContentType("application/json");
         String action = request.getParameter("action");
@@ -158,4 +204,5 @@ public class DashboardServlet extends HttpServlet {
             response.setStatus(500);
         }
     }
+
 }

@@ -1,11 +1,12 @@
 import com.google.gson.JsonObject;
-import org.jasypt.util.password.StrongPasswordEncryptor
+import org.jasypt.util.password.StrongPasswordEncryptor;
 
 import jakarta.servlet.ServletConfig;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import session.QuerySession;
 import session.ShoppingCartSession;
 
@@ -52,59 +53,79 @@ public class LoginServlet extends HttpServlet {
         String username = request.getParameter("username");
         String password = request.getParameter("password");
 
-        /* This example only allows username/password to be test/test
-        /  in the real project, you should talk to the database to verify username/password
-        */
         JsonObject responseJsonObject = new JsonObject();
         try (Connection conn = dataSource.getConnection()) {
-            String loginQuery = "SELECT c.password from customers c where email = ?";
-
-            PreparedStatement loginStatement = conn.prepareStatement(loginQuery);
-            loginStatement.setString(1, username);
-
-            ResultSet loginRs = loginStatement.executeQuery();
-            if (loginRs.next()) {
-                // Check password
-                StrongPasswordEncryptor spe =
-                    new StrongPasswordEncryptor();
-                String encryptedPassword = loginRs.getString("password");
-                if (spe.checkPassword(password, encryptedPassword)) {
-                    // Login success:
-
-                    // Set this user into the session
-                    request.getSession().setAttribute("username", username);
-                    request.getSession().setAttribute("query", new QuerySession());
-                    request.getSession().setAttribute("shoppingCart", new ShoppingCartSession());
-
-                    responseJsonObject.addProperty("status", "success");
-                    responseJsonObject.addProperty("message", "success");
-                } else {
-                    // Login fail: incorrect password
-                    responseJsonObject.addProperty("status", "fail");
-                    // Log to localhost log
-                    request.getServletContext().log("Login failed (incorrect password)");
-
-                    // give user an error message
-                    responseJsonObject.addProperty("message", "Incorrect password");
-                }
-            } else {
-                // Login fail: incorrect username
-                responseJsonObject.addProperty("status", "fail");
-                // Log to localhost log
-                request.getServletContext().log("Login failed (incorrect username)");
-
-                // give user an error message
-                responseJsonObject.addProperty("message", "Incorrect username");
+            // Attempt customer login
+            if (attemptCustomerLogin(conn, username, password, request, responseJsonObject)) {
+                responseJsonObject.addProperty("redirect", "mainpage.html");
             }
-        } catch(Exception e) {
-            // server error
-            // Log error to localhost log
-            request.getServletContext().log("Error:", e);
+            // Attempt employee login if not a customer
+            else if (attemptEmployeeLogin(conn, username, password, request, responseJsonObject)) {
+                responseJsonObject.addProperty("redirect", "dashboard.html");
+            }
+            // Login failed
+            else {
+                responseJsonObject.addProperty("status", "fail");
+                responseJsonObject.addProperty("message", "Incorrect username or password");
+            }
+            response.getWriter().write(responseJsonObject.toString());
 
-            // let the user know that a server error has occurred and to try again later
+        } catch (Exception e) {
+            e.printStackTrace();
             responseJsonObject.addProperty("status", "fail");
             responseJsonObject.addProperty("message", "Server error; please try again later");
+            response.getWriter().write(responseJsonObject.toString());
         }
         response.getWriter().write(responseJsonObject.toString());
+    }
+
+    private boolean attemptCustomerLogin(Connection conn, String username, String password, HttpServletRequest request, JsonObject responseJsonObject) throws Exception {
+        String customerQuery = "SELECT password FROM customers WHERE email = ?";
+        try (PreparedStatement statement = conn.prepareStatement(customerQuery)) {
+            statement.setString(1, username);
+            ResultSet rs = statement.executeQuery();
+
+            if (rs.next()) {
+                StrongPasswordEncryptor passwordEncryptor = new StrongPasswordEncryptor();
+                String encryptedPassword = rs.getString("password");
+
+                if (passwordEncryptor.checkPassword(password, encryptedPassword)) {
+                    HttpSession session = request.getSession(true);
+                    session.setAttribute("username", username);
+                    session.setAttribute("role", "customer");
+
+                    session.setAttribute("query", new QuerySession());
+                    session.setAttribute("shoppingCart", new ShoppingCartSession());
+
+                    responseJsonObject.addProperty("status", "success");
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private boolean attemptEmployeeLogin(Connection conn, String username, String password, HttpServletRequest request, JsonObject responseJsonObject) throws Exception {
+        String employeeQuery = "SELECT password, fullname FROM employees WHERE email = ?";
+        try (PreparedStatement statement = conn.prepareStatement(employeeQuery)) {
+            statement.setString(1, username);
+            ResultSet rs = statement.executeQuery();
+
+            if (rs.next()) {
+                StrongPasswordEncryptor passwordEncryptor = new StrongPasswordEncryptor();
+                String encryptedPassword = rs.getString("password");
+
+                if (passwordEncryptor.checkPassword(password, encryptedPassword)) {
+                    HttpSession session = request.getSession(true);
+                    session.setAttribute("employeeEmail", username);
+                    session.setAttribute("employeeName", rs.getString("fullname"));
+                    session.setAttribute("role", "employee");
+
+                    responseJsonObject.addProperty("status", "success");
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 }
