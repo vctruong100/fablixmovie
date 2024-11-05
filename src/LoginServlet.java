@@ -1,4 +1,6 @@
 import com.google.gson.JsonObject;
+import org.jasypt.util.password.StrongPasswordEncryptor
+
 import jakarta.servlet.ServletConfig;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -63,7 +65,10 @@ public class LoginServlet extends HttpServlet {
             ResultSet loginRs = loginStatement.executeQuery();
             if (loginRs.next()) {
                 // Check password
-                if (loginRs.getString("password").equals(password)) {
+                StrongPasswordEncryptor spe =
+                    new StrongPasswordEncryptor();
+                String encryptedPassword = loginRs.getString("password");
+                if (spe.checkPassword(password, encryptedPassword)) {
                     // Login success:
 
                     // Set this user into the session
