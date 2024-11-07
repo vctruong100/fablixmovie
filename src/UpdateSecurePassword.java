@@ -35,15 +35,18 @@ public class UpdateSecurePassword {
         int alterResult = statement.executeUpdate(alterQuery);
         System.out.println("altering customers table schema completed, " + alterResult + " rows affected");
 
+        // Update employees table
+        String alterEmployeeQuery = "ALTER TABLE employees MODIFY COLUMN password VARCHAR(128)";
+        int alterEmployeeResult = statement.executeUpdate(alterEmployeeQuery);
+        System.out.println("altering employees table schema completed, " + alterEmployeeResult + " rows affected");
+
         // get the ID and password for each customer
         String query = "SELECT id, password from customers";
-
         ResultSet rs = statement.executeQuery(query);
 
         // we use the StrongPasswordEncryptor from jasypt library (Java Simplified Encryption)
         //  it internally use SHA-256 algorithm and 10,000 iterations to calculate the encrypted password
         PasswordEncryptor passwordEncryptor = new StrongPasswordEncryptor();
-
         ArrayList<String> updateQueryList = new ArrayList<>();
 
         System.out.println("encrypting password (this might take a while)");
@@ -69,7 +72,31 @@ public class UpdateSecurePassword {
             int updateResult = statement.executeUpdate(updateQuery);
             count += updateResult;
         }
-        System.out.println("updating password completed, " + count + " rows affected");
+        System.out.println("Customer password update completed, " + count + " rows affected");
+
+        // Employee password update
+        String employeeQuery = "SELECT email, password FROM employees";
+        ResultSet employeeRs = statement.executeQuery(employeeQuery);
+
+        ArrayList<String> employeeUpdateQueryList = new ArrayList<>();
+
+        System.out.println("Encrypting employee passwords (this might take a while)");
+        while (employeeRs.next()) {
+            String email = employeeRs.getString("email");
+            String password = employeeRs.getString("password");
+            String encryptedPassword = passwordEncryptor.encryptPassword(password);
+            String updateQuery = String.format("UPDATE employees SET password='%s' WHERE email='%s';", encryptedPassword, email);
+            employeeUpdateQueryList.add(updateQuery);
+        }
+        employeeRs.close();
+
+        System.out.println("Updating employee passwords");
+        int employeeCount = 0;
+        for (String updateQuery : employeeUpdateQueryList) {
+            int updateResult = statement.executeUpdate(updateQuery);
+            employeeCount += updateResult;
+        }
+        System.out.println("Employee password update completed, " + employeeCount + " rows affected");
 
         statement.close();
         connection.close();
