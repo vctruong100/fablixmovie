@@ -49,3 +49,18 @@ jQuery(document).ready(() => {
         window.location.href = searchQuery;  // Redirect to Movie List page with search parameters
     });
 });
+
+// Handle logout button click
+jQuery("#logout_button").on("click", function() {
+    jQuery.ajax({
+        url: "api/logout",
+        method: "POST",
+        success: function() {
+            // Redirect to the login page after logging out
+            window.location.replace("login.html");
+        },
+        error: function() {
+            alert("Logout failed. Please try again.");
+        }
+    });
+});
