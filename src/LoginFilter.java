@@ -55,6 +55,7 @@ public class LoginFilter implements Filter {
             if (httpRequest.getSession().getAttribute(
                     "employeeEmail") == null) {
                 System.out.println(" (blocked) (customer)");
+                httpResponse.sendRedirect(rootContext + "/_dashboard/login.html");
             } else {
                 System.out.println(" (allowed) (employee)");
                 chain.doFilter(request, response);
