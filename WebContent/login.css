@@ -35,3 +35,16 @@
 .login-btn:hover {
     background-color: #357abd;
 }
+
+.g-recaptcha {
+    margin: 20px auto;
+    display: flex;
+    justify-content: center;
+}
+
+#login_error_message {
+    color: red;
+    margin-top: 15px;
+    font-size: 14px;
+    text-align: center;
+}
