@@ -76,7 +76,6 @@ public class LoginServlet extends HttpServlet {
             responseJsonObject.addProperty("message", "Server error; please try again later");
             response.getWriter().write(responseJsonObject.toString());
         }
-        response.getWriter().write(responseJsonObject.toString());
     }
 
     private boolean attemptCustomerLogin(Connection conn, String username, String password, HttpServletRequest request, JsonObject responseJsonObject) throws Exception {
