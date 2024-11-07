@@ -13,6 +13,7 @@
     <div class="login-box">
         <h2>Sign in to Fablix</h2>
         <form id="login_form" method="post" action="api/login">
+            <input type="hidden" name="userType" value="employee">
             <div class="input-box">
                 <label for="username">Email</label>
                 <input name="username" id="username" placeholder="Enter email" type="text" required>
@@ -29,6 +30,6 @@
     </div>
 </div>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
-<script src="../login.js"></script>
+<script src="login.js"></script>
 </body>
 </html>

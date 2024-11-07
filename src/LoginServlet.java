@@ -38,38 +38,44 @@ public class LoginServlet extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
         String gRecaptchaResponse = request.getParameter("g-recaptcha-response");
 
-        try {
-            // Verify reCAPTCHA
-            RecaptchaVerifyUtils.verify(gRecaptchaResponse);
-        } catch (Exception e) {
-            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-            JsonObject responseJsonObject = new JsonObject();
-            responseJsonObject.addProperty("status", "fail");
-            responseJsonObject.addProperty("message", "reCAPTCHA verification failed");
-            response.getWriter().write(responseJsonObject.toString());
-            return;
-        }
+//        try {
+//            // Verify reCAPTCHA
+//            RecaptchaVerifyUtils.verify(gRecaptchaResponse);
+//        } catch (Exception e) {
+//            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+//            JsonObject responseJsonObject = new JsonObject();
+//            responseJsonObject.addProperty("status", "fail");
+//            responseJsonObject.addProperty("message", "reCAPTCHA verification failed");
+//            response.getWriter().write(responseJsonObject.toString());
+//            return;
+//        }
 
         String username = request.getParameter("username");
         String password = request.getParameter("password");
+        String userType = request.getParameter("userType");
 
         JsonObject responseJsonObject = new JsonObject();
         try (Connection conn = dataSource.getConnection()) {
-            // Attempt customer login
-            if (attemptCustomerLogin(conn, username, password, request, responseJsonObject)) {
+            boolean loginSuccess = false;
+
+            // Check if the user is a customer or an employee
+            if ("customer".equals(userType)) {
+                loginSuccess = attemptCustomerLogin(conn, username, password, request, responseJsonObject);
                 responseJsonObject.addProperty("redirect", "mainpage.html");
+                responseJsonObject.addProperty("role", "customer");
+            } else if ("employee".equals(userType)) {
+                loginSuccess = attemptEmployeeLogin(conn, username, password, request, responseJsonObject);
+                responseJsonObject.addProperty("redirect", "_dashboard/dashboard.html");
+                responseJsonObject.addProperty("role", "employee");
             }
-            // Attempt employee login if not a customer
-            else if (attemptEmployeeLogin(conn, username, password, request, responseJsonObject)) {
-                responseJsonObject.addProperty("redirect", "dashboard.html");
-            }
-            // Login failed
-            else {
+
+            if (!loginSuccess) {
                 responseJsonObject.addProperty("status", "fail");
                 responseJsonObject.addProperty("message", "Incorrect username or password");
+            } else {
+                responseJsonObject.addProperty("status", "success");
             }
             response.getWriter().write(responseJsonObject.toString());
-
         } catch (Exception e) {
             e.printStackTrace();
             responseJsonObject.addProperty("status", "fail");

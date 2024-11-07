@@ -13,6 +13,7 @@
     <div class="login-box">
         <h2>Sign in to Fablix</h2>
         <form id="login_form" method="post" action="api/login">
+            <input type="hidden" name="userType" value="customer">
             <div class="input-box">
                 <label for="username">Email</label>
                 <input name="username" id="username" placeholder="Enter email" type="text" required>
@@ -22,7 +23,7 @@
                 <input name="password" id="password" placeholder="Enter Password" type="password" required>
             </div>
             <!-- reCAPTCHA widget -->
-            <div class="g-recaptcha" data-sitekey="6LfxpXMqAAAAAG-GHoBy9nd9ZdaXD68RaFmT8sTF"></div>
+<!--            <div class="g-recaptcha" data-sitekey="6LfxpXMqAAAAAG-GHoBy9nd9ZdaXD68RaFmT8sTF"></div>-->
             <input type="submit" value="Sign In" class="login-btn">
         </form>
         <div id="login_error_message"></div>

@@ -12,7 +12,7 @@ import javax.sql.DataSource;
 import java.io.IOException;
 import java.sql.*;
 
-@WebServlet(name = "DashboardServlet", urlPatterns = "/fab-project/_dashboard")
+@WebServlet(name = "DashboardServlet", urlPatterns = "/api/dashboard")
 public class DashboardServlet extends HttpServlet {
 
     private DataSource dataSource;

@@ -5,7 +5,7 @@ $(document).ready(function () {
 
     function loadMetadata() {
         $.ajax({
-            url: "/fab-project/_dashboard",
+            url: "../api/dashboard",
             method: "GET",
             data: { action: "metadata" },
             dataType: "json",
