@@ -19,11 +19,12 @@ public class LoginFilter implements Filter {
             throws IOException, ServletException {
         HttpServletRequest httpRequest = (HttpServletRequest) request;
         HttpServletResponse httpResponse = (HttpServletResponse) response;
+        String rootContext = request.getServletContext().getContextPath();
 
         System.out.print("LoginFilter: " + httpRequest.getRequestURI());
 
         // Check if this URL is allowed to access without logging in
-        if (this.isUrlAllowedWithoutLogin(httpRequest.getRequestURI())) {
+        if (this.isUrlAllowedWithoutLogin(rootContext, httpRequest.getRequestURI())) {
             // Keep default action: pass along the filter chain
             System.out.println(" (allowed)");
             chain.doFilter(request, response);
@@ -31,22 +32,29 @@ public class LoginFilter implements Filter {
         }
 
         // Redirect to login page if the "username" attribute doesn't exist in session
+        // If the entry point is "_dashboard", then redirect to the dashboard login page
         if (httpRequest.getSession().getAttribute("username") == null) {
             System.out.println(" (blocked)");
-            httpResponse.sendRedirect("login.html");
+            if (httpRequest.getRequestURI().startsWith(rootContext + "/_dashboard")) {
+                httpResponse.sendRedirect(rootContext + "/_dashboard/login.html");
+            } else {
+                httpResponse.sendRedirect(rootContext + "/login.html");
+            }
         } else {
             System.out.println(" (allowed)");
             chain.doFilter(request, response);
         }
     }
 
-    private boolean isUrlAllowedWithoutLogin(String requestURI) {
+    private boolean isUrlAllowedWithoutLogin(
+            String rootContext, String requestURI) {
         /*
          Setup your own rules here to allow accessing some resources without logging in
          Always allow your own login related requests(html, js, servlet, etc..)
          You might also want to allow some CSS files, etc..
          */
-        return allowedURIs.stream().anyMatch(requestURI.toLowerCase()::endsWith);
+        return allowedURIs.stream().map(uri -> rootContext + "/" + uri)
+                .anyMatch(requestURI.toLowerCase()::endsWith);
     }
 
     public void init(FilterConfig fConfig) {
