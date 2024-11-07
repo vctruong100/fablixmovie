@@ -1,0 +1,61 @@
+@import '../shared.css';
+
+form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 0 auto;
+    max-width: 600px;
+    padding: 20px;
+    background-color: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+h2 {
+    color: #4a90e2;
+    font-size: 24px;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+form input[type="text"],
+form input[type="number"] {
+    width: 100%;
+    padding: 12px;
+    margin: 10px 0;
+    border: 1px solid #cfd4d9;
+    border-radius: 5px;
+    background-color: #f9fafc;
+    color: #2e3a4e;
+    font-size: 16px;
+}
+
+form input[type="text"]:focus,
+form input[type="number"]:focus {
+    outline: none;
+    background-color: #e6ecf1;
+}
+
+form button {
+    padding: 12px 20px;
+    background-color: #4a90e2;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+    transition: background-color 0.3s ease;
+}
+
+form button:hover {
+    background-color: #357abd;
+}
+
+#response-message {
+    margin-top: 20px;
+    font-size: 14px;
+    color: #2e3a4e;
+    text-align: center;
+}

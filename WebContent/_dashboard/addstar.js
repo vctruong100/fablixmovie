@@ -3,7 +3,7 @@ $(document).ready(function () {
         event.preventDefault();
 
         $.ajax({
-            url: "/fab-project/_dashboard",
+            url: "../api/dashboard",
             method: "POST",
             data: $(this).serialize() + "&action=addStar",
             dataType: "json",
