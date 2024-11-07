@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login to Fablix</title>
+    <link rel="stylesheet" href="../shared.css">
+    <link rel="stylesheet" href="../login.css">
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+</head>
+<body>
+<div class="login-container">
+    <div class="login-box">
+        <h2>Sign in to Fablix</h2>
+        <form id="login_form" method="post" action="api/login">
+            <div class="input-box">
+                <label for="username">Email</label>
+                <input name="username" id="username" placeholder="Enter email" type="text" required>
+            </div>
+            <div class="input-box">
+                <label for="password">Password</label>
+                <input name="password" id="password" placeholder="Enter Password" type="password" required>
+            </div>
+            <!-- reCAPTCHA widget -->
+<!--            <div class="g-recaptcha" data-sitekey="6LfxpXMqAAAAAG-GHoBy9nd9ZdaXD68RaFmT8sTF"></div>-->
+            <input type="submit" value="Sign In" class="login-btn">
+        </form>
+        <div id="login_error_message"></div>
+    </div>
+</div>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+<script src="../login.js"></script>
+</body>
+</html>

@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Movie</title>
+    <link rel="stylesheet" href="../shared.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="../addmovie.js" defer></script>
+</head>
+<nav class="navbar">
+    <div class="navbar-links">
+        <a href="dashboard.html">Home</a>
+        <a href="addmovie.html">Add Movie</a>
+        <a href="addstar.html">Add Star</a>
+        <a href="addgenre.html">Add Genre</a>
+        <a href="mainpage.html">Browse Movie</a>
+    </div>
+</nav>
+<body>
+<h2>Add New Movie</h2>
+<form id="add-movie-form">
+    <input type="text" name="title" placeholder="Movie Title" required>
+    <input type="number" name="year" placeholder="Year" required>
+    <input type="text" name="director" placeholder="Director" required>
+    <input type="text" name="star" placeholder="Star Name" required>
+    <input type="text" name="genre" placeholder="Genre" required>
+    <button type="submit">Add Movie</button>
+</form>
+<div id="response-message"></div>
+</body>
+</html>

@@ -1,0 +1,50 @@
+@import 'shared.css';
+
+.login-container {
+    width: 100%;
+    max-width: 400px;
+    padding: 20px;
+    margin: auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+}
+
+.login-box {
+    background-color: #ffffff;
+    padding: 40px;
+    border-radius: 10px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    width: 100%;
+}
+
+.login-btn {
+    background-color: #4a90e2;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    width: 100%;
+    transition: background-color 0.3s ease;
+}
+
+.login-btn:hover {
+    background-color: #357abd;
+}
+
+.g-recaptcha {
+    margin: 20px auto;
+    display: flex;
+    justify-content: center;
+}
+
+#login_error_message {
+    color: red;
+    margin-top: 15px;
+    font-size: 14px;
+    text-align: center;
+}
