@@ -90,6 +90,13 @@ public class UpdateSecurePassword {
         }
         employeeRs.close();
 
+        System.out.println("Updating employee passwords");
+        int employeeCount = 0;
+        for (String employeeUpdateQuery : employeeUpdateQueryList) {
+            employeeCount += statement.executeUpdate(employeeUpdateQuery);
+        }
+        System.out.println("Employee password update completed, " + employeeCount + " rows affected");
+
         statement.close();
         connection.close();
 
