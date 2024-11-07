@@ -11,6 +11,8 @@ import java.util.ArrayList;
 @WebFilter(filterName = "LoginFilter", urlPatterns = "/*")
 public class LoginFilter implements Filter {
     private final ArrayList<String> allowedURIs = new ArrayList<>();
+    //private final ArrayList<String> customerURIs = new ArrayList<>();
+    //private final ArrayList<String> employeeURIs = new ArrayList<>();
 
     /**
      * @see Filter#doFilter(ServletRequest, ServletResponse, FilterChain)
@@ -31,19 +33,39 @@ public class LoginFilter implements Filter {
             return;
         }
 
-        // Redirect to login page if the "username" attribute doesn't exist in session
-        // If the entry point is "_dashboard", then redirect to the dashboard login page
-        if (httpRequest.getSession().getAttribute("username") == null) {
-            System.out.println(" (blocked)");
-            if (httpRequest.getRequestURI().startsWith(rootContext + "/_dashboard")) {
+        // Redirect all unauthenticated users to login page
+        if (httpRequest.getSession().getAttribute("username") == null
+                && httpRequest.getSession().getAttribute("employeeEmail") == null) {
+            // If entry point is "_dashboard",
+            // redirect to dashboard login instead
+            if (httpRequest.getRequestURI().startsWith(
+                    rootContext + "/_dashboard")) {
+                System.out.println(" (blocked)");
                 httpResponse.sendRedirect(rootContext + "/_dashboard/login.html");
             } else {
+                System.out.println(" (blocked)");
                 httpResponse.sendRedirect(rootContext + "/login.html");
             }
-        } else {
-            System.out.println(" (allowed)");
-            chain.doFilter(request, response);
+            return;
         }
+
+        // Only allow employees access to _dashboard pages
+        if (httpRequest.getRequestURI().startsWith(
+                rootContext + "/_dashboard")) {
+            if (httpRequest.getSession().getAttribute(
+                    "employeeEmail") == null) {
+                System.out.println(" (blocked) (customer)");
+            } else {
+                System.out.println(" (allowed) (employee)");
+                chain.doFilter(request, response);
+            }
+            return;
+        }
+
+        // Allow customers and employees access to any pages
+        // not disallowed here for simplicity
+        System.out.println(" (allowed) (any)");
+        chain.doFilter(request, response);
     }
 
     private boolean isUrlAllowedWithoutLogin(
