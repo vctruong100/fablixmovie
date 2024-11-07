@@ -20,17 +20,39 @@ $(document).ready(function () {
     }
 
     function displayMetadata(metadata) {
-        let metadataHtml = "<ul>";
+        let metadataHtml = "";
 
         metadata.forEach(table => {
-            metadataHtml += `<li><strong>${table.table_name}</strong><ul>`;
+            metadataHtml += `
+            <div class="metadata-section">
+                <h3>${table.table_name}</h3>
+                <table class="dashboard-table">
+                    <thead>
+                        <tr>
+                            <th>Column Name</th>
+                            <th>Type</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+        `;
+
             table.columns.forEach(column => {
-                metadataHtml += `<li>${column.column_name}: ${column.type}</li>`;
+                metadataHtml += `
+                <tr>
+                    <td>${column.column_name}</td>
+                    <td>${column.type}</td>
+                </tr>
+            `;
             });
-            metadataHtml += "</ul></li>";
+
+            metadataHtml += `
+                    </tbody>
+                </table>
+            </div>
+        `;
         });
 
-        metadataHtml += "</ul>";
         $("#metadata-container").html(metadataHtml);
     }
+
 });

@@ -65,7 +65,7 @@ public class LoginServlet extends HttpServlet {
                 responseJsonObject.addProperty("role", "customer");
             } else if ("employee".equals(userType)) {
                 loginSuccess = attemptEmployeeLogin(conn, username, password, request, responseJsonObject);
-                responseJsonObject.addProperty("redirect", "_dashboard/dashboard.html");
+                responseJsonObject.addProperty("redirect", "dashboard.html");
                 responseJsonObject.addProperty("role", "employee");
             }
 
@@ -94,6 +94,10 @@ public class LoginServlet extends HttpServlet {
                 StrongPasswordEncryptor passwordEncryptor = new StrongPasswordEncryptor();
                 String encryptedPassword = rs.getString("password");
 
+                System.out.println("Input Password: " + password);
+                System.out.println("Encrypted Password from DB: " + encryptedPassword);
+                System.out.println("Password Match: " + passwordEncryptor.checkPassword(password, encryptedPassword));
+
                 if (passwordEncryptor.checkPassword(password, encryptedPassword)) {
                     HttpSession session = request.getSession(true);
                     session.setAttribute("username", username);
@@ -119,6 +123,10 @@ public class LoginServlet extends HttpServlet {
             if (rs.next()) {
                 StrongPasswordEncryptor passwordEncryptor = new StrongPasswordEncryptor();
                 String encryptedPassword = rs.getString("password");
+
+                System.out.println("Input Password: " + password);
+                System.out.println("Encrypted Password from DB: " + encryptedPassword);
+                System.out.println("Password Match: " + passwordEncryptor.checkPassword(password, encryptedPassword));
 
                 if (passwordEncryptor.checkPassword(password, encryptedPassword)) {
                     HttpSession session = request.getSession(true);

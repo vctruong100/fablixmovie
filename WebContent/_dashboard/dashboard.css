@@ -1,0 +1,46 @@
+@import '../shared.css';
+
+#metadata-container {
+    margin-top: 30px;
+    padding: 20px;
+    background-color: #ffffff;
+    border: 1px solid #cfd4d9;
+    border-radius: 8px;
+    color: #2e3a4e;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.metadata-section {
+    margin-bottom: 30px;
+}
+
+.metadata-section h3 {
+    font-size: 20px;
+    font-weight: bold;
+    color: #4a90e2;
+    margin-bottom: 10px;
+}
+
+/* Table Styles */
+.dashboard-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 15px;
+}
+
+.dashboard-table th,
+.dashboard-table td {
+    padding: 10px 12px;
+    text-align: left;
+    border-bottom: 1px solid #e0e6ec;
+}
+
+.dashboard-table th {
+    background-color: #4a90e2;
+    color: #ffffff;
+    text-transform: uppercase;
+}
+
+.dashboard-table tr:hover td {
+    background-color: #f1f5fa;
+}
