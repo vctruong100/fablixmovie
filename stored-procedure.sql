@@ -31,15 +31,17 @@ BEGIN
     END IF;
 
     -- Find or create star
-    SELECT MAX(id) INTO starId FROM stars WHERE id LIKE 'nm%';
+    SELECT id INTO starId FROM stars WHERE name = starName LIMIT 1;
     IF starId IS NULL THEN
-        SET starId = 'nm0000001';
-    ELSE
-        SET starId = CONCAT('nm', LPAD(SUBSTRING(starId, 3) + 1, 7, '0'));
-    END IF;
+        -- Generate a new starId if the star does not exist
+        SELECT MAX(id) INTO starId FROM stars WHERE id LIKE 'nm%';
+        IF starId IS NULL THEN
+            SET starId = 'nm0000001';
+        ELSE
+            SET starId = CONCAT('nm', LPAD(SUBSTRING(starId, 3) + 1, 7, '0'));
+        END IF;
 
-    -- Insert star if it doesn't exist
-    IF NOT EXISTS (SELECT id FROM stars WHERE name = starName LIMIT 1) THEN
+        -- Insert the new star
         INSERT INTO stars (id, name) VALUES (starId, starName);
     END IF;
 
@@ -50,6 +52,8 @@ BEGIN
     ELSE
         SET newMovieId = CONCAT('tt', LPAD(SUBSTRING(newMovieId, 3) + 1, 7, '0'));
     END IF;
+
+    -- Insert the new movie
     INSERT INTO movies (id, title, year, director) VALUES (newMovieId, movieTitle, movieYear, movieDirector);
 
     -- Link movie to star and genre
