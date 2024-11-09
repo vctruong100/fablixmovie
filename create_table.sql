@@ -86,18 +86,19 @@ CREATE TABLE IF NOT EXISTS prices(
 
 -- create sales records table
 CREATE TABLE IF NOT EXISTS sales_records(
-    saleId integer not null,
-    movieId varchar(10) not null,
-    salePrice decimal(5,2) not null,
-    quantity integer not null,
-    foreign key(saleId) references sales(id),
-    foreign key(movieId) references movies(id)
+	saleId integer not null,
+	movieId varchar(10) not null,
+	salePrice decimal(5,2) not null,
+	quantity integer not null,
+	foreign key(saleId) references sales(id),
+	foreign key(movieId) references movies(id)
 );
 
+-- create employees table
 CREATE TABLE IF NOT EXISTS employees(
-    email varchar(50) primary key,
-    password varchar(128) not null, -- 128 for encrypted password?
-    fullname varchar(100)
+	email varchar(50) primary key,
+	password varchar(20) not null, -- 128 for encrypted password?
+	fullname varchar(100)
 );
 
 -- Sample employee

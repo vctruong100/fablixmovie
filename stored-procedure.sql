@@ -60,6 +60,13 @@ BEGIN
     INSERT INTO stars_in_movies (starId, movieId) VALUES (starId, newMovieId);
     INSERT INTO genres_in_movies (genreId, movieId) VALUES (genreId, newMovieId);
 
+    -- Generate random price for this movie
+    SET @min_price = 1.00;
+    SET @max_price = 100.00;
+    SET @price_range = @max_price - @min_price;
+    INSERT INTO prices (movieId, price)
+    VALUES (newMovieId, TRUNCATE(RAND() * @price_range + @min_price, 2));
+
     SET statusMessage = 'Movie added successfully.';
     END IF;
 END //
