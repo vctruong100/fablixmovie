@@ -46,10 +46,12 @@ public class MovieResultProc extends BaseResultProc {
              * we add a moviePriceCents field for proper summation of the total price
              * on the client side
              */
-            BigDecimal moviePriceDecimal  = rs.getBigDecimal("p.price");
-            BigDecimal moviePriceCents = moviePriceDecimal.multiply(new BigDecimal(100));
-            String moviePriceCentsString = moviePriceCents.toString();
-
+            String moviePriceCentsString = null;
+            if (moviePrice != null && !moviePrice.isEmpty()) {
+                BigDecimal moviePriceDecimal  = rs.getBigDecimal("p.price");
+                BigDecimal moviePriceCents = moviePriceDecimal.multiply(new BigDecimal(100));
+                moviePriceCentsString = moviePriceCents.toString();
+            }
 
             /* process genres */
             MovieGenresQuery mgQuery = new MovieGenresQuery(movieId);
