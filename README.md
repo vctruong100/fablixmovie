@@ -1,50 +1,87 @@
-## Project Styling and Extra Credits
-Beautified all pages with custom styles to meet extra credit requirements.
+## Extra Credit Domain Registration: https://fablixmovies.tech/fab-project/login.html
+- Credits to .Tech Domains for providing the free domain name for our project
 
 ## Demo
 Project 1: https://www.youtube.com/watch?v=gUnYy8DNaRM
 
 Project 2: https://www.youtube.com/watch?v=kSFtYlGfwkM
-Note: I initially typed "tern" instead of "term" in the search bar, resulting in an incorrect movie item. 
-I redid the entire search to demonstrate that it functions correctly.
+
+Project 3: 
 
 ## Contributions
 ### Vinh
-- Implemented MainPageServlet, ShoppingCartServlet, and PaymentServlet
-- Developed JavaScript (JS) and HTML for payment, shopping cart, and confirmation pages
-- Helped extend the Movie List feature on the front end
-- Created styles for each HTML page
-- Recorded the Demo video
+- Integrated reCAPTCHA for login and added logout feature
+- Updated the dashboard with proper GET/POST handling and secure password encryption
+- Created a stored procedure add_movie for adding movies and stars to the database
+- Worked on HTTPS configuration and URL redirection for secure connections
+- Assisted in optimizing queries and updating the LoginFilter to handle customer and employee access
+- Recorded the Demo video and updated the README file
+- Registered a domain name on .tech and deployed the project on https://fablixmovies.tech/fab-project/login.html
 
 ### Jason
-- Implemented LoginServlet, SearchServlet, BrowseServlet
-- Designed the SQL queries for search / browsing
-- Extended Movie List, Single Star, Single Movie with proper stars & genres ordering according to spec
-- Jointly worked on supporting jumps from single pages to movie list
-- Modified DB schema to support prices and multiple movies per sale
-- Migrated existing DB with scripts to generate random prices for movies and associate existing sales with new sales records
+- Developed LoginFilter to handle dashboard and login URLs
+- Modified the database schema to support employee logins, prices, and multiple movies per sale
+- Migrated existing database records with scripts to include encrypted employee passwords and random movie prices
+- Implemented data parsing for XML files (main.xml, actors.xml, and casts.xml) and reported inconsistencies
+- Enhanced the security of the login process using prepared statements and proper password verification
+- Worked on parsing time optimization strategies for XML data
 
-## Substring Pattern Design
-### Title / Director / Star (Search)
-- Searches movie by either title / director / star
-- Pattern matching implemented in `src/query/MovieListQuery.java`
-- Case insensitivity implemented by matching the lowercase column with the lowercase pattern
-- We use `LIKE` to match the column with `%query%`, where `query` is replaced with the user's query
-- This matches columns where the substring exists
-- Examples:
-  - `inter` matches `Divine Intervention` or `Winter Tale`
-  - `hell` matches `Comedy Hell` or `Hello, Goodbye!`
+## Filenames with Prepared Statements
+- src/query/BaseQuery.java
+- src/query/ConditionalQuery.java
+- src/query/GroupingQuery.java
+- src/query/MovieGenresQuery.java
+- src/query/MovieListQuery.java
+- src/query/MovieQuery.java
+- src/query/MovieStarsQuery.java
+- src/query/StarMoviesQuery.java
+- src/query/StarQuery.java
 
-### Alpha (Browse by Title)
-- Searches movie based on the first char of the movie title (alpha or non-alpha)
-- Pattern matching implemented in `src/query/MovieListQuery.java`
-- Case insensitivity implemented by matching the lowercase column with lowercase patterns
-- If `alpha` is a valid alphanumeric char, we use `LIKE` to match title with `alpha%`, which gets titles that start with `alpha`
-- Otherwise, wildcard `*` uses `REGEXP_LIKE` to match title with regex `^[^a-zA-Z0-9].+`, which gets titles that start with a non-alphanumeric char
-- Examples:
-  - `alpha=3` matches `3000` or `3b1b`
-  - `alpha=A` matches `A Movie` or `Asterisk`
-  - `alpha=*` matches `:)` or `.hack`
+## Parsing Time Optimization Strategies
+### One: In-Memory Caching for Duplicate Checking:
+- Implemented in-memory caching using hash maps and sets.
+- Efficiently checked for duplicate entries (e.g., actors, films, and cast relationships) before database insertion.
+
+### Two: 
+
+### Performance Improvement 
+- Naive Implementation: The initial, unoptimized implementation took 626 seconds (over 10 minutes) to complete.
+- Optimized Implementation: After applying these two optimization strategies, the process now runs in under 30 seconds, resulting in a substantial performance boost.
+
+## Inconsistent Data Reports
+### actors.xml
+- Missing or Empty Stage Name:
+  - Some actors have no stage name or an empty stage name
+- Invalid Date of Birth (DOB): 
+  - DOBs that cannot be parsed as integers or are formatted incorrectly.
+
+### casts.xml
+- Missing Film ID (fid): 
+  - Some cast entries are missing the film ID, leading to schema inconsistencies.
+- Missing Actor Name: 
+  - Some cast entries have no actor name or an empty actor name.
+- Unresolved Film References: 
+  - Film IDs that do not exist in the parsed films database are flagged as missing references.
+- Duplicate Cast Entries: 
+  - Identical cast relationships (same actor and film ID) are flagged as duplicates.
+- Missing Actor in Database: 
+  - Actors referenced in the cast data but not present in the actor database are added, with warnings for potential data integrity issues.
+- Multiple Actor Entries Warning: 
+  - Casts with the same actor name but multiple records for that actor are flagged = ambiguity.
+
+### mains.xml
+- Missing Film ID (fid): 
+  - Films with no film ID or an empty film ID are marked as inconsistent.
+- Empty Title: 
+  - Film titles that are missing or empty are flagged.
+- Invalid Year: 
+  - Years that cannot be parsed as integers or are formatted incorrectly are reported.
+- Duplicate Films: 
+  - Films with the same title, year, and director are flagged as duplicates.
+- Category Warnings: 
+  - Empty or unrecognized categories are flagged, but these are treated as warnings rather than schema violations.
+- Propagation of Categories: 
+  - Duplicate film entries are updated with new categories if applicable.
 
 ## Requirements
 - Java 11.0.24
