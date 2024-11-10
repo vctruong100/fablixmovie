@@ -21,7 +21,7 @@ function handleLoginResult(resultDataString) {
         console.log(resultDataJson["message"]);
         $("#login_error_message").text(resultDataJson["message"]);
 
-        // grecaptcha.reset();
+        grecaptcha.reset();
 
     }
 }
@@ -39,26 +39,22 @@ function submitLoginForm(formSubmitEvent) {
      */
     formSubmitEvent.preventDefault();
 
-    // let recaptchaResponse = grecaptcha.getResponse();
+    let recaptchaResponse = grecaptcha.getResponse();
 
-    // let recaptchaResponse = "dummy-response"; // Temporary response for testing
-    // console.log("reCAPTCHA response bypassed for testing");
-    //
-    // if (!recaptchaResponse) {
-    //     $("#login_error_message").text("Please complete the reCAPTCHA");
-    //     return;
-    // }
+    if (!recaptchaResponse) {
+        $("#login_error_message").text("Please complete the reCAPTCHA");
+        return;
+    }
 
     $.ajax(
         "api/login", {
             method: "POST",
             // Serialize the login form to the data sent by POST request
-            data: login_form.serialize(),
+            data: login_form.serialize() + "&g-recaptcha-response=" + recaptchaResponse,
             success: handleLoginResult
         }
     );
 }
-// data: login_form.serialize() + "&g-recaptcha-response=" + recaptchaResponse,
 
 // Bind the submit action of the form to a handler function
 login_form.submit(submitLoginForm);
