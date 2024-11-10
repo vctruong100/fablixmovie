@@ -697,24 +697,25 @@ public class StanfordXmlParser {
         PreparedStatement selectStatement;
         PreparedStatement insertStatement;
         ResultSet selectRs;
-        Set<Actor> flattenedActors;
+        Set<Actor> actorsToInsert;
         int selectAccum = 0;
         int insertAccum = 0;
 
         // set of actors
-        flattenedActors = actors.values().stream()
+        actorsToInsert = actors.values().stream()
                 .flatMap(List::stream)
                 .collect(Collectors.toSet());
 
         // single SQL query to detect duplicate actors
         selectSb.append("select sf_xml_actors.id, stageName, dob, (s.id) dupid from (values ");
-        selectSb.append("row(?, ?, ?),".repeat(flattenedActors.size()));
+        selectSb.append("row(?, ?, ?),".repeat(actorsToInsert.size()));
         selectSb.deleteCharAt(selectSb.length() - 1);
         selectSb.append(") as sf_xml_actors(id, stageName, dob) ");
         selectSb.append("left join stars s on s.name=sf_xml_actors.stageName ");
-        selectSb.append("and s.birthYear=sf_xml_actors.dob");
+        selectSb.append("and (s.birthYear=sf_xml_actors.dob or ");
+        selectSb.append("s.birthYear is null and sf_xml_actors.dob is null)");
         selectStatement = conn.prepareStatement(selectSb.toString());
-        for (Actor actor : flattenedActors) {
+        for (Actor actor : actorsToInsert) {
             selectAccum = actor.parameterize(selectStatement, selectAccum);
         }
         selectRs = selectStatement.executeQuery();
@@ -725,8 +726,10 @@ public class StanfordXmlParser {
             String dupid = selectRs.getString("dupid");
             if (dupid != null) {
                 // rectify inconsistency
+                // maps actor id to duplicate id so
+                // relationships can link to duplicate instead
                 sb = new StringBuilder();
-                id = selectRs.getString("id");
+                id = selectRs.getString("sf_xml_actors.id");
                 stageName = selectRs.getString("stageName");
                 sb.append("RECTIFY actor id='");
                 sb.append(id);
@@ -734,24 +737,29 @@ public class StanfordXmlParser {
                 sb.append(dupid);
                 sb.append("' (EXISTS)\n");
                 sbuf.append(sb);
-                actors.get(stageName).removeIf(actor -> {
-                   if (actor.id.equals(id)) {
-                       flattenedActors.remove(actor);
-                       return true;
-                   }
-                   return false;
+
+                actors.get(stageName).forEach(actor -> {
+                    if (actor.id.equals(id)) {
+                        actor.id = dupid;
+                        actorsToInsert.remove(actor);
+                    }
                 });
             }
         }
 
+        if (actorsToInsert.isEmpty()) {
+            System.out.println("No actors to insert");
+            return; // no actors to insert
+        }
+
         // single SQL query to insert all remaining actors
         insertSb.append("insert into stars(id, name, birthYear) values ");
-        insertSb.append("(?, ?, ?),".repeat(flattenedActors.size()));
+        insertSb.append("(?, ?, ?),".repeat(actorsToInsert.size()));
         insertSb.deleteCharAt(insertSb.length() - 1);
         insertStatement = conn.prepareStatement(insertSb.toString());
-        for (Actor actor : flattenedActors) {
+        for (Actor actor : actorsToInsert) {
             insertAccum = actor.parameterize(insertStatement, insertAccum);
-            }
+        }
         insertStatement.executeUpdate();
         insertStatement.close();
 
@@ -760,29 +768,36 @@ public class StanfordXmlParser {
 
     private void loadCasts() throws SQLException {
         // casts map to stars_in_movies table
-        String relExistsQuery = "select * from stars_in_movies where starId = ? and movieId = ?";
-        String relInsertQuery = "insert into stars_in_movies(starId, movieId) values (?, ?)";
+        // uses a single SQL query along with in-memory duplicate checking
+        // to optimize cast insertion
+        StringBuilder insertSb = new StringBuilder();
+        PreparedStatement insertStatement;
+        int accum = 0;
+        int castsSize;
+
+        if (casts.isEmpty()) {
+            System.out.println("No casts to insert");
+            return;
+        }
+
+        castsSize = casts.parallelStream()
+                .mapToInt(cast -> actors.get(cast.actor).size())
+                .sum();
+
+        insertSb.append("insert into stars_in_movies(starId, movieId) values (?, ?) ");
+        insertSb.append("select aid, fid from (values ");
+        insertSb.append("row(?, ?),".repeat(castsSize));
+        insertSb.deleteCharAt(insertSb.length() - 1);
+        insertSb.append(") as sf_xml_casts(aid, fid) ");
+        insertSb.append("where (aid, fid) not in (select starId, movieId from stars_in_movies)");
+        insertStatement = conn.prepareStatement(insertSb.toString());
         for (Cast cast : casts) {
             // get the proper film id (which may have changed during insertion)
             String fid2 = films.get(cast.fid).fid;
-
-            // insert relationship for all actors under the same stage name
-            for (Actor actor : actors.get(cast.actor)) {
-                PreparedStatement relExistsStatement = conn.prepareStatement(relExistsQuery);
-                PreparedStatement relInsertStatement = conn.prepareStatement(relInsertQuery);
-                ResultSet relExistsRs;
-
-                // only insert if it doesn't already exist
-                relExistsStatement.setString(1, actor.id);
-                relExistsStatement.setString(2, fid2);
-                relExistsRs = relExistsStatement.executeQuery();
-                if (!relExistsRs.next()) {
-                    relInsertStatement.setString(1, actor.id);
-                    relInsertStatement.setString(2, fid2);
-                    relInsertStatement.executeUpdate();
-                }
-                relExistsStatement.close();
-                relInsertStatement.close();
+            String stageName = cast.actor;
+            for (Actor actor : actors.get(stageName)) {
+                insertStatement.setString(++accum, actor.id);
+                insertStatement.setString(++accum, fid2);
             }
         }
     }
@@ -791,6 +806,7 @@ public class StanfordXmlParser {
         // films map to movies table
         // cats map to genre_in_movies table
         // reduced to a few SQL queries for efficiency
+        List<Film> filmsToInsert = new ArrayList<>(films.size());
         StringBuilder sbuf = new StringBuilder();
         StringBuilder selectSb = new StringBuilder();
         StringBuilder insertSb = new StringBuilder();
@@ -830,19 +846,24 @@ public class StanfordXmlParser {
         selectRs = selectStatement.executeQuery();
         while (selectRs.next()) {
             StringBuilder sb;
-            String fid;
+            String fid = selectRs.getString("fid");
             String dupid = selectRs.getString("dupid");
             if (dupid != null) {
                 // rectify inconsistency
+                // this updates the fid with the duplicate id
+                // so relationships can match to the duplicate id instead
                 sb = new StringBuilder();
-                fid = selectRs.getString("fid");
                 sb.append("RECTIFY film fid='");
                 sb.append(fid);
                 sb.append("' -> fid='");
                 sb.append(dupid);
                 sb.append("' (EXISTS)\n");
                 sbuf.append(sb);
-                films.remove(fid);
+                // because fid is prepended with header, remove header
+                // note that the key does not have sf prepended
+                films.get(fid.substring(2)).fid = dupid;
+            } else {
+                filmsToInsert.add(films.get(fid.substring(2)));
             }
         }
         selectStatement.close();
@@ -852,13 +873,17 @@ public class StanfordXmlParser {
          * and generate random prices.
          * Each step is done in a single SQL query
          */
+        if (filmsToInsert.isEmpty()) {
+            System.out.println("No films to insert");
+            return; // no films to insert
+        }
 
         // insert all movies
         insertSb.append("insert into movies(id, title, year, director) values ");
-        insertSb.append("(?, ?, ?, ?),".repeat(films.values().size()));
+        insertSb.append("(?, ?, ?, ?),".repeat(filmsToInsert.size()));
         insertSb.deleteCharAt(insertSb.length() - 1);
         insertStatement = conn.prepareStatement(insertSb.toString());
-        for (Film film : films.values()) {
+        for (Film film : filmsToInsert) {
             insertAccum = film.parameterize(insertStatement, insertAccum);
         }
         insertStatement.executeUpdate();
@@ -868,7 +893,7 @@ public class StanfordXmlParser {
         insertCatSb.append("insert into genres_in_movies(genreId, movieId) ");
         insertCatSb.append("select g.id, fid from (values ");
         insertCatSb.append("row(?, ?),".repeat(
-                films.values().parallelStream()
+                filmsToInsert.parallelStream()
                         .mapToInt(film -> film.cats.size())
                         .sum())
         );
@@ -876,7 +901,7 @@ public class StanfordXmlParser {
         insertCatSb.append(") as sf_xml_relcats(fid, cat), genres g ");
         insertCatSb.append("where g.name=sf_xml_relcats.cat");
         insertCatStatement = conn.prepareStatement(insertCatSb.toString());
-        for (Film film : films.values()) {
+        for (Film film : filmsToInsert) {
             for (String cat : film.cats) {
                 insertCatStatement.setString(++insertCatAccum, film.fid);
                 insertCatStatement.setString(++insertCatAccum, cat);
@@ -892,7 +917,7 @@ public class StanfordXmlParser {
         insertPriceSb.deleteCharAt(insertPriceSb.length() - 1);
         insertPriceSb.append(") as sf_xml_film(fid)");
         insertPriceStatement = conn.prepareStatement(insertPriceSb.toString());
-        for (Film film : films.values()) {
+        for (Film film : filmsToInsert) {
             insertPriceStatement.setString(++insertPriceAccum, film.fid);
         }
         insertPriceStatement.executeUpdate();
