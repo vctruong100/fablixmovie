@@ -11,12 +11,14 @@ import java.nio.file.Paths;
 import java.sql.*;
 import java.util.*;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 abstract class ParsedElement {
     enum Option {
         STR,
-        NUM,
         DUP,
+        REF,
+        PROP,
         WARN,
         MISS,
         MULTI,
@@ -63,6 +65,12 @@ abstract class ParsedElement {
             }
             if (inc.opt.contains(Option.DUP)) {
                 sb.append(" (DUPLICATE)");
+            }
+            if (inc.opt.contains(Option.REF)) {
+                sb.append(" (REFERENCE)");
+            }
+            if (inc.opt.contains(Option.PROP))  {
+                sb.append(" (PROPAGATED)");
             }
             if (inc.opt.contains(Option.WARN)) {
                 sb.append(" (WARNING)");
@@ -170,6 +178,32 @@ class Actor extends ParsedElement {
         }
         return sb.toString();
     }
+
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o instanceof Actor) {
+            Actor a = (Actor) o;
+            return Objects.equals(stageName, a.stageName)
+                    && Objects.equals(dob, a.dob);
+        }
+        return false;
+    }
+
+    public int hashCode() {
+        return Objects.hash(stageName, dob);
+    }
+
+    public int parameterize(PreparedStatement st, int paramIndex)
+            throws SQLException {
+        st.setString(++paramIndex, id);
+        st.setString(++paramIndex, stageName);
+        if (dob != null) {
+            st.setInt(++paramIndex, dob);
+        } else {
+            st.setNull(++paramIndex, Types.INTEGER);
+        }
+        return paramIndex;
+    }
 }
 
 // m element in casts.xml
@@ -197,6 +231,7 @@ class Cast extends ParsedElement {
                     "f", null,
                     EnumSet.of(Option.STR)));
             schemaConsistent = false;
+            return;
         } else {
             fid = fElement.getTextContent().trim();
         }
@@ -207,6 +242,7 @@ class Cast extends ParsedElement {
                     "a", null,
                     EnumSet.of(Option.STR)));
             schemaConsistent = false;
+            return;
         } else {
             actor = aElement.getTextContent().trim();
             if (actor.isEmpty()) {
@@ -214,6 +250,7 @@ class Cast extends ParsedElement {
                         "a", actor,
                         EnumSet.of(Option.STR)));
                 schemaConsistent = false;
+                return;
             }
         }
 
@@ -224,6 +261,7 @@ class Cast extends ParsedElement {
                     "f", fid,
                     EnumSet.of(Option.STR, Option.MISS)));
             schemaConsistent = false;
+            return;
         }
 
         // check if cast is a duplicate
@@ -235,15 +273,18 @@ class Cast extends ParsedElement {
                     "a", actor,
                     EnumSet.of(Option.STR, Option.DUP)));
             schemaConsistent = false;
+            return;
         }
 
-        // if actor does not exist, add a new actor with dob=null
-        // the actor is only added if schema is consistent
+        // no matching actor
+        // schema is still consistent if we add an actor
+        // such that dob=null
         if (!actors.containsKey(actor)) {
-            if (schemaConsistent) {
-                actors.put(actor, new ArrayList<>());
-                actors.get(actor).add(new Actor(actor, null));
-            }
+            actors.put(actor, new ArrayList<>());
+            actors.get(actor).add(new Actor(actor, null));
+            inconsistencies.add(new Inconsistency(
+                    "a", actor,
+                    EnumSet.of(Option.STR, Option.MISS, Option.WARN)));
         } else {
             // possible warning if there exists multiple actors
             // since cast shall associate all actors of the same stage
@@ -263,7 +304,8 @@ class Cast extends ParsedElement {
         if (this == o) return true;
         if (o instanceof Cast) {
             Cast c = (Cast) o;
-            return fid.equals(c.fid) && actor.equals(c.actor);
+            return Objects.equals(fid, c.fid)
+                    && Objects.equals(actor, c.actor);
         }
         return false;
     }
@@ -278,15 +320,21 @@ class Cast extends ParsedElement {
 class Film extends ParsedElement {
     public static final String HEADER = "sf";
 
-    List<String> cats = new ArrayList<>();
+    Set<String> cats = new TreeSet<>();
     String director;
     String fid;
     String title;
     Integer year;
     boolean schemaConsistent = true;
 
-    public Film(int index, Element element, Map<String, Film> films) {
+    public Film(int index,
+                String director,
+                Element element,
+                Map<String, Film> films,
+                Map<Integer, String> fids)
+    {
         super(index, element.getTagName());
+        int hashcode;
         // Parse film element based on main.dtd
         Element fidElement = (Element) element.getElementsByTagName("fid")
                 .item(0);
@@ -296,12 +344,16 @@ class Film extends ParsedElement {
                 .item(0);
         NodeList catNodeList = element.getElementsByTagName("cat");
 
+        // director
+        this.director = director;
+
         // fid
         if (fidElement == null) {
             inconsistencies.add(new Inconsistency(
                     "fid", null,
                     EnumSet.of(Option.STR)));
             schemaConsistent = false;
+            return;
         } else {
             fid = fidElement.getTextContent().trim();
             if (fid.isEmpty()) {
@@ -309,11 +361,13 @@ class Film extends ParsedElement {
                         "fid", fid,
                         EnumSet.of(Option.STR)));
                 schemaConsistent = false;
+                return;
             } else if (films.containsKey(fid)) {
                 inconsistencies.add(new Inconsistency(
                         "fid", fid,
                         EnumSet.of(Option.STR, Option.DUP)));
                 schemaConsistent = false; // no duplicates
+                return;
             }
         }
 
@@ -324,6 +378,7 @@ class Film extends ParsedElement {
                     "title", title,
                     EnumSet.of(Option.STR)));
             schemaConsistent = false; // assume empty title is null
+            return;
         }
 
         // year
@@ -334,6 +389,7 @@ class Film extends ParsedElement {
                     "year", yearElement.getTextContent().trim(),
                     EnumSet.of(Option.STR)));
             schemaConsistent = false;
+            return;
         }
 
         // cats
@@ -350,6 +406,68 @@ class Film extends ParsedElement {
             // map cats to their appropriate mappings if applicable
             cats.addAll(CatsMapping.collect(cat));
         }
+
+        // check against duplicate by field equivalence
+        hashcode = hashCode();
+        if (fids.containsKey(hashcode)) {
+            // insert cats from this film
+            // to the referenced film
+            // in case different cats have been defined
+            String catsFmt;
+            String fid2 = fids.get(hashcode);
+            if (cats.isEmpty()) {
+                catsFmt = "[]";
+            } else {
+                catsFmt = "['" + String.join("', '", cats) + "']";
+                films.get(fid2).cats.addAll(cats);
+            }
+
+            // schema inconsistent due to duplication
+            inconsistencies.add(new Inconsistency(
+                    "fid", fid,
+                    EnumSet.of(Option.STR)));
+            inconsistencies.add(new Inconsistency(
+                    "fid2", fid2,
+                    EnumSet.of(Option.STR, Option.REF)));
+            inconsistencies.add(new Inconsistency(
+                    "title", title,
+                    EnumSet.of(Option.STR)));
+            inconsistencies.add(new Inconsistency(
+                    "year", year.toString(),
+                    EnumSet.of(Option.STR)));
+            inconsistencies.add(new Inconsistency(
+                    "director", director,
+                    EnumSet.of(Option.STR)));
+            inconsistencies.add(new Inconsistency(
+                    "cats", catsFmt,
+                    EnumSet.of(Option.PROP)));
+            schemaConsistent = false;
+        }
+    }
+
+    public boolean equals(Object o) {
+        // key equivalence for casts set
+        if (this == o) return true;
+        if (o instanceof Film) {
+            Film f = (Film) o;
+            return Objects.equals(title, f.title)
+                    && Objects.equals(year, f.year)
+                    && Objects.equals(director, f.director);
+        }
+        return false;
+    }
+
+    public int hashCode() {
+        return Objects.hash(title, year, director);
+    }
+
+    public int parameterize(PreparedStatement st, int paramIndex)
+            throws SQLException {
+        st.setString(++paramIndex, fid);
+        st.setString(++paramIndex, title);
+        st.setInt(++paramIndex, year);
+        st.setString(++paramIndex, director);
+        return paramIndex;
     }
 }
 
@@ -371,13 +489,16 @@ public class StanfordXmlParser {
     Set<Cast> casts = new HashSet<>();
     Map<String, List<Actor>> actors = new TreeMap<>();
     Map<String, Film> films = new TreeMap<>();
+    Map<Integer, String> fids = new HashMap<>();
 
     public StanfordXmlParser(Path path) throws Exception {
         String loginUser = "mytestuser";
         String loginPasswd = "My6$Password";
         String loginUrl = "jdbc:mysql://localhost:3306/moviedb";
 
-        Class.forName("com.mysql.jdbc.Driver").newInstance();
+        // shared connection for single threads
+        Class.forName("com.mysql.cj.jdbc.Driver")
+                .getDeclaredConstructor().newInstance();
         conn = DriverManager.getConnection(loginUrl, loginUser, loginPasswd);
         conn.setAutoCommit(false);
 
@@ -395,11 +516,11 @@ public class StanfordXmlParser {
         parseMainsDocument();
         parseCastsDocument();
 
-        // insert step
-        insertCats();
-        insertActors();
-        insertFilms();
-        insertCasts();
+        // load step
+        loadCats();
+        loadActors();
+        loadFilms();
+        loadCasts();
 
         outputParsedData(); // TEMP
     }
@@ -500,111 +621,144 @@ public class StanfordXmlParser {
             Element directorNameElement = (Element) directorElement
                     .getElementsByTagName("dirname").item(0);
             NodeList filmNodeList = element.getElementsByTagName("film");
-            StringBuilder buffer = new StringBuilder();
+            StringBuilder sb = new StringBuilder();
+            String director = null;
 
             if (filmNodeList.getLength() == 0) {
                 continue; // no films
             }
 
-            if (directorNameElement == null) {
+            if (directorNameElement != null) {
+                director = directorNameElement.getTextContent().trim();
+            }
+            if (director == null || director.isEmpty()) {
                 // Inconsistency: missing dirname tag; director is null
-                buffer.append("SKIP film ");
-                buffer.append(elementCnt);
+                sb.append("SKIP film ");
+                sb.append(elementCnt);
                 if (filmNodeList.getLength() > 1) {
-                    buffer.append("-");
-                    buffer.append(elementCnt + filmNodeList.getLength() - 1);
+                    sb.append("-");
+                    sb.append(elementCnt + filmNodeList.getLength() - 1);
                 }
-                buffer.append(": dirname=null;\n");
+                if (director == null) {
+                    sb.append(": dirname=null;\n");
+                } else {
+                    sb.append(": dirname='';\n");
+                }
                 elementCnt += filmNodeList.getLength();
             } else {
                 // Each film in this node list shall be associated
                 // with the dirname text as the director
                 for (int j = 0; j < filmNodeList.getLength(); j++) {
                     Element filmElement = (Element) filmNodeList.item(j);
-                    Film film = new Film(elementCnt++, filmElement, films);
-                    film.director = directorNameElement.getTextContent();
+                    Film film = new Film(elementCnt++, director, filmElement, films, fids);
                     if (film.schemaConsistent) {
                         // no schema inconsistencies
                         // add to films using fid as key
+                        // also add fid to avoid possible duplicate entries by value
                         films.put(film.fid, film);
+                        fids.put(film.hashCode(), film.fid);
+                        cats.addAll(film.cats);
                     }
-                    buffer.append(film.reportInconsistencies());
-                    cats.addAll(film.cats);
+                    sb.append(film.reportInconsistencies());
                 }
             }
-            if (buffer.length() > 0) {
-                inconsistentMainsBuf.append(buffer);
-            }
+            inconsistentMainsBuf.append(sb);
         }
     }
 
-    private void insertCats() throws SQLException {
+    private void loadCats() throws SQLException {
         // cats map to genres table
-        String existsQuery = "select * from genres where name = ?";
-        String insertQuery = "insert into genres(name) values (?)";
+        // reduced to a single SQL call for efficiency
+        StringBuilder insertSb = new StringBuilder();
+        PreparedStatement insertStatement;
+        int accum = 0;
+
+        // this only inserts cats if they do not already exist
+        insertSb.append("insert into genres(name) select name from (values ");
+        insertSb.append("row(?),".repeat(cats.size()));
+        insertSb.deleteCharAt(insertSb.length() - 1);
+        insertSb.append(") as sf_xml_cats(name) ");
+        insertSb.append("where name not in (select name from genres)");
+
+        insertStatement = conn.prepareStatement(insertSb.toString());
         for (String cat : cats) {
-            PreparedStatement existsStatement = conn.prepareStatement(existsQuery);
-            PreparedStatement insertStatement = conn.prepareStatement(insertQuery);
-            ResultSet existsRs;
-
-            // only insert if it doesn't already exist
-            existsStatement.setString(1, cat);
-            existsRs = existsStatement.executeQuery();
-            if (!existsRs.next()) {
-                insertStatement.setString(1, cat);
-                insertStatement.executeUpdate();
-            }
-            existsStatement.close();
-            insertStatement.close();
+            insertStatement.setString(++accum, cat);
         }
+        insertStatement.executeUpdate();
+        insertStatement.close();
     }
 
-    private void insertActors() throws SQLException {
+    private void loadActors() throws SQLException {
         // actors map to stars table
-        String existsQuery = "select * from stars where name = ? and birthYear = ?";
-        String insertQuery = "insert into stars(id, name, birthYear) values (?, ?, ?)";
-        for (var val : actors.values()) {
-            for (Actor actor : val) {
-                PreparedStatement existsStatement = conn.prepareStatement(existsQuery);
-                PreparedStatement insertStatement = conn.prepareStatement(insertQuery);
-                ResultSet existsRs;
+        // reduced to a few SQL queries for efficiency
+        StringBuilder sbuf = new StringBuilder();
+        StringBuilder selectSb = new StringBuilder();
+        StringBuilder insertSb = new StringBuilder();
+        PreparedStatement selectStatement;
+        PreparedStatement insertStatement;
+        ResultSet selectRs;
+        Set<Actor> flattenedActors;
+        int selectAccum = 0;
+        int insertAccum = 0;
 
-                // only insert if it doesn't already exist
-                existsStatement.setString(1, actor.stageName);
-                if (actor.dob != null) {
-                    existsStatement.setInt(2, actor.dob);
-                } else {
-                    existsStatement.setNull(2, Types.INTEGER);
-                }
+        // set of actors
+        flattenedActors = actors.values().stream()
+                .flatMap(List::stream)
+                .collect(Collectors.toSet());
 
-                existsRs = existsStatement.executeQuery();
-                if (!existsRs.next()) {
-                    insertStatement.setString(1, actor.id);
-                    insertStatement.setString(2, actor.stageName);
-                    if (actor.dob != null) {
-                        insertStatement.setInt(3, actor.dob);
-                    } else {
-                        insertStatement.setNull(3, Types.INTEGER);
-                    }
-                    insertStatement.executeUpdate();
-                } else {
-                    // if it exists, use the id in the database
-                    String oldId = actor.id;
-                    actor.id = existsRs.getString("id");
-
-                    inconsistentInsertsBuf.append("REPLACE actor id='");
-                    inconsistentInsertsBuf.append(oldId);
-                    inconsistentInsertsBuf.append("' -> id='");
-                    inconsistentInsertsBuf.append(actor.id);
-                    inconsistentInsertsBuf.append("' (EXISTS)\n");
-                }
-                existsStatement.close();
-                insertStatement.close();
+        // single SQL query to detect duplicate actors
+        selectSb.append("select sf_xml_actors.id, stageName, dob, (s.id) dupid from (values ");
+        selectSb.append("row(?, ?, ?),".repeat(flattenedActors.size()));
+        selectSb.deleteCharAt(selectSb.length() - 1);
+        selectSb.append(") as sf_xml_actors(id, stageName, dob) ");
+        selectSb.append("left join stars s on s.name=sf_xml_actors.stageName ");
+        selectSb.append("and s.birthYear=sf_xml_actors.dob");
+        selectStatement = conn.prepareStatement(selectSb.toString());
+        for (Actor actor : flattenedActors) {
+            selectAccum = actor.parameterize(selectStatement, selectAccum);
+        }
+        selectRs = selectStatement.executeQuery();
+        while (selectRs.next()) {
+            StringBuilder sb;
+            String id;
+            String stageName;
+            String dupid = selectRs.getString("dupid");
+            if (dupid != null) {
+                // rectify inconsistency
+                sb = new StringBuilder();
+                id = selectRs.getString("id");
+                stageName = selectRs.getString("stageName");
+                sb.append("RECTIFY actor id='");
+                sb.append(id);
+                sb.append("' -> id='");
+                sb.append(dupid);
+                sb.append("' (EXISTS)\n");
+                sbuf.append(sb);
+                actors.get(stageName).removeIf(actor -> {
+                   if (actor.id.equals(id)) {
+                       flattenedActors.remove(actor);
+                       return true;
+                   }
+                   return false;
+                });
             }
         }
+
+        // single SQL query to insert all remaining actors
+        insertSb.append("insert into stars(id, name, birthYear) values ");
+        insertSb.append("(?, ?, ?),".repeat(flattenedActors.size()));
+        insertSb.deleteCharAt(insertSb.length() - 1);
+        insertStatement = conn.prepareStatement(insertSb.toString());
+        for (Actor actor : flattenedActors) {
+            insertAccum = actor.parameterize(insertStatement, insertAccum);
+            }
+        insertStatement.executeUpdate();
+        insertStatement.close();
+
+        inconsistentInsertsBuf.append(sbuf);
     }
 
-    private void insertCasts() throws SQLException {
+    private void loadCasts() throws SQLException {
         // casts map to stars_in_movies table
         String relExistsQuery = "select * from stars_in_movies where starId = ? and movieId = ?";
         String relInsertQuery = "insert into stars_in_movies(starId, movieId) values (?, ?)";
@@ -633,90 +787,118 @@ public class StanfordXmlParser {
         }
     }
 
-    private void insertFilms() throws SQLException {
+    private void loadFilms() throws SQLException {
         // films map to movies table
         // cats map to genre_in_movies table
-        String existsQuery = "select * from movies where title = ? and year = ? and director = ?";
-        String insertQuery = "insert into movies(id, title, year, director) values (?, ?, ?, ?)";
-        String genreIdQuery = "select id from genres where name = ?";
-        String relExistsQuery = "select * from genres_in_movies where movieId = ? and genreId = ?";
-        String relInsertQuery = "insert into genres_in_movies(movieId, genreId) values (?, ?)";
-        String priceInsertQuery = "insert into prices(movieId, price) "
-                + "values (?, truncate(rand() * 99.00 + 1.00, 2))";
+        // reduced to a few SQL queries for efficiency
+        StringBuilder sbuf = new StringBuilder();
+        StringBuilder selectSb = new StringBuilder();
+        StringBuilder insertSb = new StringBuilder();
+        StringBuilder insertCatSb = new StringBuilder();
+        StringBuilder insertPriceSb = new StringBuilder();
+        PreparedStatement selectStatement;
+        PreparedStatement insertStatement;
+        PreparedStatement insertCatStatement;
+        PreparedStatement insertPriceStatement;
+        ResultSet selectRs;
+        int selectAccum = 0;
+        int insertAccum = 0;
+        int insertCatAccum = 0;
+        int insertPriceAccum = 0;
+
+        // prepend unique header to avoid any
+        // potential id conflicts with the existing database
+        films.values().parallelStream().forEach(film -> {
+           film.fid = Film.HEADER + film.fid;
+        });
+
+        /*
+         * Single SQL query to possibly detect if a film is a
+         * duplicate with a pre-existing film in the database
+         */
+        selectSb.append("select fid, sf_xml_films.title, sf_xml_films.year, ");
+        selectSb.append("sf_xml_films.director, (m.id) dupid from (values ");
+        selectSb.append("row(?, ?, ?, ?),".repeat(films.values().size()));
+        selectSb.deleteCharAt(selectSb.length() - 1);
+        selectSb.append(") as sf_xml_films(fid, title, year, director) ");
+        selectSb.append("left join movies m on m.title=sf_xml_films.title ");
+        selectSb.append("and m.year=sf_xml_films.year and m.director=sf_xml_films.director");
+        selectStatement = conn.prepareStatement(selectSb.toString());
         for (Film film : films.values()) {
-            PreparedStatement existsStatement = conn.prepareStatement(existsQuery);
-            PreparedStatement insertStatement = conn.prepareStatement(insertQuery);
-            PreparedStatement priceInsertStatement = conn.prepareStatement(priceInsertQuery);
-            ResultSet existsRs;
-
-            // prepend a unique header to avoid any
-            // potential id conflicts with the database
-            film.fid = Film.HEADER + film.fid;
-
-            // only insert if it doesn't already exist
-            existsStatement.setString(1, film.title);
-            existsStatement.setInt(2, film.year);
-            existsStatement.setString(3, film.director);
-            existsRs = existsStatement.executeQuery();
-
-            if (!existsRs.next()) {
-                insertStatement.setString(1, film.fid);
-                insertStatement.setString(2, film.title);
-                insertStatement.setInt(3, film.year);
-                insertStatement.setString(4, film.director);
-                insertStatement.executeUpdate();
-
-                priceInsertStatement.setString(1, film.fid);
-                priceInsertStatement.executeUpdate();
-            } else {
-                // if it exists, use the id in the database
-                String oldId = film.fid;
-                film.fid = existsRs.getString("id");
-
-                inconsistentInsertsBuf.append("REPLACE film fid='");
-                inconsistentInsertsBuf.append(oldId);
-                inconsistentInsertsBuf.append("' -> fid='");
-                inconsistentInsertsBuf.append(film.fid);
-                inconsistentInsertsBuf.append("' (EXISTS)\n");
-            }
-            existsStatement.close();
-            insertStatement.close();
-            priceInsertStatement.close();
-
-            // insert all cat relationships
-            for (String cat : film.cats) {
-                int genreId;
-                PreparedStatement genreIdStatement = conn.prepareStatement(genreIdQuery);
-                PreparedStatement relExistsStatement = conn.prepareStatement(relExistsQuery);
-                PreparedStatement relInsertStatement = conn.prepareStatement(relInsertQuery);
-                ResultSet genreIdRs;
-                ResultSet relExistsRs;
-
-                // get genre id for cat
-                genreIdStatement.setString(1, cat);
-                genreIdRs = genreIdStatement.executeQuery();
-                if (!genreIdRs.next()) {
-                    genreIdStatement.close();
-                    relExistsStatement.close();
-                    relInsertStatement.close();
-                    continue; // ??? missing cat
-                }
-                genreId = genreIdRs.getInt("id");
-
-                // only insert if it doesn't already exist
-                relExistsStatement.setString(1, film.fid);
-                relExistsStatement.setInt(2, genreId);
-                relExistsRs = relExistsStatement.executeQuery();
-                if (!relExistsRs.next()) {
-                    relInsertStatement.setString(1, film.fid);
-                    relInsertStatement.setInt(2, genreId);
-                    relInsertStatement.executeUpdate();
-                }
-                genreIdStatement.close();
-                relExistsStatement.close();
-                relInsertStatement.close();
+            selectAccum = film.parameterize(selectStatement, selectAccum);
+        }
+        selectRs = selectStatement.executeQuery();
+        while (selectRs.next()) {
+            StringBuilder sb;
+            String fid;
+            String dupid = selectRs.getString("dupid");
+            if (dupid != null) {
+                // rectify inconsistency
+                sb = new StringBuilder();
+                fid = selectRs.getString("fid");
+                sb.append("RECTIFY film fid='");
+                sb.append(fid);
+                sb.append("' -> fid='");
+                sb.append(dupid);
+                sb.append("' (EXISTS)\n");
+                sbuf.append(sb);
+                films.remove(fid);
             }
         }
+        selectStatement.close();
+
+        /*
+         * SQL queries to insert all movies, associate genres,
+         * and generate random prices.
+         * Each step is done in a single SQL query
+         */
+
+        // insert all movies
+        insertSb.append("insert into movies(id, title, year, director) values ");
+        insertSb.append("(?, ?, ?, ?),".repeat(films.values().size()));
+        insertSb.deleteCharAt(insertSb.length() - 1);
+        insertStatement = conn.prepareStatement(insertSb.toString());
+        for (Film film : films.values()) {
+            insertAccum = film.parameterize(insertStatement, insertAccum);
+        }
+        insertStatement.executeUpdate();
+        insertStatement.close();
+
+        // insert all relatable cats
+        insertCatSb.append("insert into genres_in_movies(genreId, movieId) ");
+        insertCatSb.append("select g.id, fid from (values ");
+        insertCatSb.append("row(?, ?),".repeat(
+                films.values().parallelStream()
+                        .mapToInt(film -> film.cats.size())
+                        .sum())
+        );
+        insertCatSb.deleteCharAt(insertCatSb.length() - 1);
+        insertCatSb.append(") as sf_xml_relcats(fid, cat), genres g ");
+        insertCatSb.append("where g.name=sf_xml_relcats.cat");
+        insertCatStatement = conn.prepareStatement(insertCatSb.toString());
+        for (Film film : films.values()) {
+            for (String cat : film.cats) {
+                insertCatStatement.setString(++insertCatAccum, film.fid);
+                insertCatStatement.setString(++insertCatAccum, cat);
+            }
+        }
+        insertCatStatement.executeUpdate();
+        insertCatStatement.close();
+
+        // generate random prices for each new film
+        insertPriceSb.append("insert into prices(movieId, price) ");
+        insertPriceSb.append("select fid, truncate(rand() * 99.00 + 1.00, 2) price from (values ");
+        insertPriceSb.append("row(?),".repeat(films.values().size()));
+        insertPriceSb.deleteCharAt(insertPriceSb.length() - 1);
+        insertPriceSb.append(") as sf_xml_film(fid)");
+        insertPriceStatement = conn.prepareStatement(insertPriceSb.toString());
+        for (Film film : films.values()) {
+            insertPriceStatement.setString(++insertPriceAccum, film.fid);
+        }
+        insertPriceStatement.executeUpdate();
+        insertPriceStatement.close();
+
+        inconsistentInsertsBuf.append(sbuf);
     }
 
     private void outputParsedData() {
@@ -818,7 +1000,7 @@ public class StanfordXmlParser {
             System.out.println("Finished executing StanfordXmlParser");
             System.out.println("Inconsistency report written to \""
                     + canonicalize.apply(parser.inconsistencyPath) + "\"");
-        } catch(Exception e) {
+        } catch (Exception e) {
             System.out.println("Error: StanfordXmlParser encountered a fatal error");
             e.printStackTrace();
             System.exit(1);
