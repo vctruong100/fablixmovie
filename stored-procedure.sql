@@ -22,7 +22,9 @@ BEGIN
 
     IF movieExists > 0 THEN
         SET statusMessage = 'Movie already exists.';
-    ELSE
+        LEAVE;
+    END IF;
+
     -- Find or create genre
     SELECT id INTO genreId FROM genres WHERE name = genreName LIMIT 1;
     IF genreId IS NULL THEN
