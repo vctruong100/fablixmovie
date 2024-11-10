@@ -111,6 +111,14 @@ The following report also gives an idea of how the XML parser handles inconsiste
   - Example: `ELEMENT film 10934: fid='BS6';fid2='BS4' (REFERENCE);title='For Love or Money';year='1993';director='Sonnenfeld';cats=['Comedy', 'Romantic'] (PROPAGATED);`
   - Note in the example that `fid='BS4'` would have `Comedy` and `Romantic` applied to its categories if it didn't exist already.
 
+### Additional Notes
+- In the XML parser implementation, we map the cats codes to a list of textual categories according to http://infolab.stanford.edu/pub/movies/doc.html#CATS (more specifically sections 3.13 and 4.4)
+- We reported roughly `55` inconsistencies in `actors.xml`
+- About `14544` inconsistencies in `casts.xml`
+- About `112` inconsistencies in `mains.xml`
+- At insertion time, we report roughly `482` inconsistencies regarding duplication which are rectified by pointing the in-memory ids to the ids in the database
+- The XML parser correctly works even if the parser is re-run since it doesn't insert duplicates
+
 ## Requirements
 - Java 11.0.24
 - Tomcat 10
