@@ -784,7 +784,7 @@ public class StanfordXmlParser {
                 .mapToInt(cast -> actors.get(cast.actor).size())
                 .sum();
 
-        insertSb.append("insert into stars_in_movies(starId, movieId) values (?, ?) ");
+        insertSb.append("insert into stars_in_movies(starId, movieId) ");
         insertSb.append("select aid, fid from (values ");
         insertSb.append("row(?, ?),".repeat(castsSize));
         insertSb.deleteCharAt(insertSb.length() - 1);
@@ -800,6 +800,8 @@ public class StanfordXmlParser {
                 insertStatement.setString(++accum, fid2);
             }
         }
+        insertStatement.executeUpdate();
+        insertStatement.close();
     }
 
     private void loadFilms() throws SQLException {

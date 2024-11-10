@@ -57,8 +57,8 @@ Project 3:
 
 ### Performance Improvement 
 - Naive Implementation: The initial, unoptimized implementation took `626` seconds (over 10 minutes) to complete.
-- Optimized Implementation: After applying the bulk selection/insertion of SQL queries, the parser runs in under `30` seconds
-- After in-memory caching for duplicate checking optimization, the parser now takes `8-16` seconds, a substantial performance boost compared to the naive implementation
+- Optimized Implementation: After applying the bulk selection/insertion of SQL queries, the parser runs in roughly `30-50` seconds
+- After in-memory caching for duplicate checking optimization, the parser now takes `10-16` seconds, a substantial performance boost compared to the naive implementation
 
 ## Inconsistent Data Reports
 The following report also gives an idea of how the XML parser handles inconsistencies when such are marked as warnings.
