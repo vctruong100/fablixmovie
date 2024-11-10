@@ -67,9 +67,16 @@ public class DashboardServlet extends HttpServlet {
             cs.execute();
             String statusMessage = cs.getString(6);
 
+            String movieId = fetchLatestMovieId(conn);
+            String starId = fetchExistingStarId(conn, starName);
+            int genreId = fetchExistingGenreId(conn, genreName);
+
             JsonObject responseJson = new JsonObject();
             responseJson.addProperty("status", "success");
-            responseJson.addProperty("message", statusMessage);
+            responseJson.addProperty("message", String.format(
+                    "%s\nMovie: %s (ID: %s)\nStar: %s (ID: %s)\nGenre: %s (ID: %d)",
+                    statusMessage, movieTitle, movieId, starName, starId, genreName, genreId
+            ));
             response.getWriter().write(responseJson.toString());
 
         } catch (SQLException e) {
@@ -111,7 +118,8 @@ public class DashboardServlet extends HttpServlet {
             JsonObject responseJson = new JsonObject();
             if (rowsAffected > 0) {
                 responseJson.addProperty("status", "success");
-                responseJson.addProperty("message", "Star added successfully");
+                responseJson.addProperty("message", String.format(
+                        "Star added successfully.\nStar: %s (ID: %s)", starName, starId));
             } else {
                 responseJson.addProperty("status", "fail");
                 responseJson.addProperty("message", "Failed to add star");
@@ -133,10 +141,13 @@ public class DashboardServlet extends HttpServlet {
                 selectStmt.setString(1, genreName);
                 ResultSet rs = selectStmt.executeQuery();
 
+                JsonObject responseJson = new JsonObject();
+
                 if (rs.next()) {
-                    JsonObject responseJson = new JsonObject();
+                    int genreId = rs.getInt("id");
                     responseJson.addProperty("status", "fail");
-                    responseJson.addProperty("message", "Genre already exists.");
+                    responseJson.addProperty("message", String.format(
+                            "Genre already exists.\nGenre: %s (ID: %d)", genreName, genreId));
                     response.getWriter().write(responseJson.toString());
                 } else {
                     // If genre does not exist, insert it
@@ -145,10 +156,17 @@ public class DashboardServlet extends HttpServlet {
                         insertStmt.setString(1, genreName);
                         int rowsAffected = insertStmt.executeUpdate();
 
-                        JsonObject responseJson = new JsonObject();
                         if (rowsAffected > 0) {
-                            responseJson.addProperty("status", "success");
-                            responseJson.addProperty("message", "Genre added successfully.");
+                            try (PreparedStatement getIdStmt = conn.prepareStatement(selectGenreQuery)) {
+                                getIdStmt.setString(1, genreName);
+                                ResultSet idRs = getIdStmt.executeQuery();
+                                if (idRs.next()) {
+                                    int genreId = idRs.getInt("id");
+                                    responseJson.addProperty("status", "success");
+                                    responseJson.addProperty("message", String.format(
+                                            "Genre added successfully.\nGenre: %s (ID: %d)", genreName, genreId));
+                                }
+                            }
                         } else {
                             responseJson.addProperty("status", "fail");
                             responseJson.addProperty("message", "Failed to add genre.");
@@ -163,6 +181,37 @@ public class DashboardServlet extends HttpServlet {
             responseJson.addProperty("status", "error");
             responseJson.addProperty("message", "Error adding genre: " + e.getMessage());
             response.getWriter().write(responseJson.toString());
+        }
+    }
+
+    // Fetch the latest Movie ID
+    private String fetchLatestMovieId(Connection conn) throws SQLException {
+        String query = "SELECT MAX(id) FROM movies WHERE id LIKE 'tt%'";
+        try (Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(query)) {
+            return rs.next() ? rs.getString(1) : "tt0000001";
+        }
+    }
+
+    // Fetch the existing Star ID
+    private String fetchExistingStarId(Connection conn, String starName) throws SQLException {
+        String query = "SELECT id FROM stars WHERE name = ? LIMIT 1";
+        try (PreparedStatement stmt = conn.prepareStatement(query)) {
+            stmt.setString(1, starName);
+            try (ResultSet rs = stmt.executeQuery()) {
+                return rs.next() ? rs.getString("id") : "nm0000001";
+            }
+        }
+    }
+
+    // Fetch the existing Genre ID
+    private int fetchExistingGenreId(Connection conn, String genreName) throws SQLException {
+        String query = "SELECT id FROM genres WHERE name = ? LIMIT 1";
+        try (PreparedStatement stmt = conn.prepareStatement(query)) {
+            stmt.setString(1, genreName);
+            try (ResultSet rs = stmt.executeQuery()) {
+                return rs.next() ? rs.getInt("id") : null;
+            }
         }
     }
 
