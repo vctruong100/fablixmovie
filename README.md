@@ -38,11 +38,15 @@ Project 3:
 - src/query/StarQuery.java
 
 ## Parsing Time Optimization Strategies
-### One: In-Memory Caching for Duplicate Checking:
+### 1: In-Memory Caching for Duplicate Checking:
 - Implemented in-memory caching using hash maps and sets.
 - Efficiently checked for duplicate entries (e.g., actors, films, and cast relationships) before database insertion.
+- Significantly reduced redundant SQL queries.
 
-### Two: 
+### 2: Bulk Selection and Insertion of SQL Queries
+- Consolidated multiple SQL queries into bulk operations.
+- Reduced the number of database interactions by performing batch inserts and selections.
+- Enhanced the efficiency of data loading and minimized transaction overhead.
 
 ### Performance Improvement 
 - Naive Implementation: The initial, unoptimized implementation took 626 seconds (over 10 minutes) to complete.
