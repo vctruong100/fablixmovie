@@ -70,5 +70,6 @@ BEGIN
     VALUES (newMovieId, TRUNCATE(RAND() * @price_range + @min_price, 2));
 
     SET statusMessage = 'Movie added successfully.';
-END //
+END;
+//
 DELIMITER ;
