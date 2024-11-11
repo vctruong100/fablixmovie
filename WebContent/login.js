@@ -13,6 +13,8 @@ function handleLoginResult(resultDataString) {
 
     // If login succeeds, it will redirect the user to index.html
     if (resultDataJson["status"] === "success") {
+        grecaptcha.reset();
+
         window.location.replace(resultDataJson["redirect"]);
     } else {
         // If login fails, the web page will display
