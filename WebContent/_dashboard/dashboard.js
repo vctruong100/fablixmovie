@@ -58,6 +58,8 @@ function handleLogout() {
         url: "../api/logout",
         method: "POST",
         success: function() {
+            grecaptcha.reset();
+
             // Redirect to the employee login page after logging out
             window.location.replace("_dashboard/login.html");
         },

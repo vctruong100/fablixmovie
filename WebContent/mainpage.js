@@ -56,6 +56,8 @@ jQuery("#logout_button").on("click", function() {
         url: "api/logout",
         method: "POST",
         success: function() {
+            grecaptcha.reset();
+
             // Redirect to the login page after logging out
             window.location.replace("login.html");
         },

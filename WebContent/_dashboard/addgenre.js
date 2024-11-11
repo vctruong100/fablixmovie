@@ -23,6 +23,8 @@ function handleLogout() {
         url: "../api/logout",
         method: "POST",
         success: function() {
+            grecaptcha.reset();
+
             window.location.replace("_dashboard/login.html");
         },
         error: function() {
