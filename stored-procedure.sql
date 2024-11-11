@@ -19,12 +19,9 @@ BEGIN
     FROM movies
     WHERE title = movieTitle AND year = movieYear AND director = movieDirector;
 
-
     IF movieExists > 0 THEN
         SET statusMessage = 'Movie already exists.';
-        LEAVE;
-    END IF;
-
+    ELSE
     -- Find or create genre
     SELECT id INTO genreId FROM genres WHERE name = genreName LIMIT 1;
     IF genreId IS NULL THEN
@@ -70,6 +67,6 @@ BEGIN
     VALUES (newMovieId, TRUNCATE(RAND() * @price_range + @min_price, 2));
 
     SET statusMessage = 'Movie added successfully.';
-END;
-//
+    END IF;
+END //
 DELIMITER ;
