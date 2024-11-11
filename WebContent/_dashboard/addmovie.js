@@ -10,8 +10,7 @@ function handleAddMovie(event) {
         success: function (response) {
             jQuery("#response-message").text(response.message);
         },
-        error: function (xhr, status, error) {
-            console.error("Error adding movie:", error);
+        error: function () {
             jQuery("#response-message").text("Error adding movie. Please try again.");
         }
     });

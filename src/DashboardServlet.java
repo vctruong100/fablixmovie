@@ -67,16 +67,23 @@ public class DashboardServlet extends HttpServlet {
             cs.execute();
             String statusMessage = cs.getString(6);
 
-            String movieId = fetchLatestMovieId(conn);
-            String starId = fetchExistingStarId(conn, starName);
-            int genreId = fetchExistingGenreId(conn, genreName);
-
             JsonObject responseJson = new JsonObject();
-            responseJson.addProperty("status", "success");
-            responseJson.addProperty("message", String.format(
-                    "%s\nMovie: %s (ID: %s)\nStar: %s (ID: %s)\nGenre: %s (ID: %d)",
-                    statusMessage, movieTitle, movieId, starName, starId, genreName, genreId
-            ));
+            if ("Movie already exists.".equals(statusMessage)) {
+                responseJson.addProperty("status", "error");
+                responseJson.addProperty("message", statusMessage);
+            } else {
+                // If no exception and movie added successfully, include all details
+                String movieId = fetchLatestMovieId(conn);
+                String starId = fetchExistingStarId(conn, starName);
+                int genreId = fetchExistingGenreId(conn, genreName);
+
+                responseJson.addProperty("status", "success");
+                responseJson.addProperty("message", String.format(
+                        "%s\nMovie: %s (ID: %s)\nStar: %s (ID: %s)\nGenre: %s (ID: %d)",
+                        statusMessage, movieTitle, movieId, starName, starId, genreName, genreId
+                ));
+            }
+
             response.getWriter().write(responseJson.toString());
 
         } catch (SQLException e) {
