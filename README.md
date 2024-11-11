@@ -6,7 +6,7 @@ Project 1: https://www.youtube.com/watch?v=gUnYy8DNaRM
 
 Project 2: https://www.youtube.com/watch?v=kSFtYlGfwkM
 
-Project 3: 
+Project 3: https://www.youtube.com/watch?v=IttZBBCscT4
 
 ## Contributions
 ### Vinh
