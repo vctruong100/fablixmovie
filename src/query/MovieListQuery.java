@@ -87,7 +87,7 @@ public class MovieListQuery extends ConditionalQuery {
      */
 
     public final void setTitle(String title) {
-        this.title = title;
+        this.title = title != null ? title.trim() : null;
         pleaseUpdate = true;
     }
 
