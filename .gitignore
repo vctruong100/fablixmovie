@@ -173,5 +173,9 @@ buildNumber.properties
 # Addendum
 .idea
 *.iml
+*.tgz
 movie-data.sql
 stanford-movies/
+toolkit/
+edth.sql
+libedth.so
