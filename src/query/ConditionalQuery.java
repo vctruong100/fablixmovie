@@ -23,10 +23,9 @@ abstract class ConditionalQuery extends BaseQuery {
     protected final List<String> selectClauses;
     protected final List<String> joinClauses;
     protected final List<String> whereClauses;
+    protected final List<String> params;
 
     protected String[] order;
-    protected String[] params;
-    protected int paramCount;
     protected boolean pleaseUpdate;
 
     private int limit;
@@ -37,10 +36,10 @@ abstract class ConditionalQuery extends BaseQuery {
         selectClauses = new ArrayList<>();
         joinClauses = new ArrayList<>();
         whereClauses = new ArrayList<>();
+        params = new ArrayList<>();
         limit = 10;
         offset = 0;
         order = null;
-        params = null;
     }
 
     /*
@@ -79,8 +78,8 @@ abstract class ConditionalQuery extends BaseQuery {
 
         queryString = builder.toString();
         statement = conn.prepareStatement(queryString);
-        for (int i = 0; i < paramCount; i++) {
-            statement.setString(i + 1, params[i]);
+        for (int i = 0; i < params.size(); i++) {
+            statement.setString(i + 1, params.get(i));
         }
         System.out.println("ConditionalQuery::countStatement --> " + statement);
         return statement;
@@ -115,8 +114,8 @@ abstract class ConditionalQuery extends BaseQuery {
 
         queryString = builder.toString();
         statement = conn.prepareStatement(queryString);
-        for (int i = 0; i < paramCount; i++) {
-            statement.setString(i + 1, params[i]);
+        for (int i = 0; i < params.size(); i++) {
+            statement.setString(i + 1, params.get(i));
         }
         System.out.println("ConditionalQuery::statement --> " + statement);
         return statement;

@@ -7,8 +7,8 @@ CREATE TABLE IF NOT EXISTS movies(
 	id varchar(10) primary key,
 	title varchar(100) not null,
 	year integer not null,
-	director varchar(100) not null
-    FULLTEXT (title)
+	director varchar(100) not null,
+	FULLTEXT idx (title)
 );
 
 -- create stars table
@@ -103,5 +103,5 @@ CREATE TABLE IF NOT EXISTS employees(
 );
 
 -- Sample employee
-INSERT INTO employees (email, password, fullname)
+INSERT IGNORE INTO employees (email, password, fullname)
 VALUES ('classta@email.edu', 'classta', 'TA CS122B');

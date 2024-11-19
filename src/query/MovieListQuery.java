@@ -25,7 +25,6 @@ public class MovieListQuery extends ConditionalQuery {
                 + "LEFT JOIN prices p ON m.id = p.movieId"
         );
         order = new String[2];
-        params = new String[6]; /* upper bound based on the final query string */
         orderByRatingTitle(OrderMode.DESC, OrderMode.ASC);
     }
 
@@ -33,43 +32,48 @@ public class MovieListQuery extends ConditionalQuery {
         /* reset state */
         selectClauses.subList(1, selectClauses.size()).clear();
         joinClauses.subList(1, joinClauses.size()).clear();
-        paramCount = 0;
+        params.clear();
 
         /* search clauses */
         if (title != null && !title.isEmpty()) {
-            whereClauses.add("LOWER(m.title) LIKE LOWER(?)");
-            params[paramCount++] = "%" + title + "%";
+            StringBuilder sb = new StringBuilder("MATCH(m.title) AGAINST (");
+            for (String word : title.split(" ")) {
+                sb.append("? ");
+                params.add("+" + word.toLowerCase() + "*");
+            }
+            sb.append("IN BOOLEAN MODE)");
+            whereClauses.add(sb.toString());
         }
         if (director != null && !director.isEmpty()) {
             whereClauses.add("LOWER(m.director) LIKE LOWER(?)");
-            params[paramCount++] = "%" + director + "%";
+            params.add("%" + director + "%");
         }
         if (year != null && !year.isEmpty()) {
             whereClauses.add("m.year = ?");
-            params[paramCount++] = year;
+            params.add(year);
         }
         if (star != null && !star.isEmpty()) {
             joinClauses.add("JOIN stars_in_movies sim ON m.id = sim.movieId");
             joinClauses.add("JOIN stars s ON sim.starId = s.id");
             whereClauses.add("LOWER(s.name) LIKE LOWER(?)");
-            params[paramCount++] = "%" + star + "%";
+            params.add("%" + star + "%");
         }
 
         /* browse clauses */
         if (alpha != null && !alpha.isEmpty()) {
             if (alpha.charAt(0) == '*') {
                 whereClauses.add("REGEXP_LIKE(m.title, ?)");
-                params[paramCount++] = "^[^a-zA-Z0-9].+";
+                params.add("^[^a-zA-Z0-9].+");
             } else {
                 whereClauses.add("LOWER(m.title) LIKE LOWER(?)");
-                params[paramCount++] = alpha + "%";
+                params.add(alpha + "%");
             }
         }
         if (genreId != null && !genreId.isEmpty()) {
             joinClauses.add("JOIN genres_in_movies gim ON m.id = gim.movieId");
             joinClauses.add("JOIN genres g ON gim.genreId = g.id");
             whereClauses.add("g.id = ?");
-            params[paramCount++] = genreId;
+            params.add(genreId);
         }
     }
 
