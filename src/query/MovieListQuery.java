@@ -37,7 +37,7 @@ public class MovieListQuery extends ConditionalQuery {
         /* search clauses */
         if (title != null && !title.isEmpty()) {
             StringBuilder sb = new StringBuilder("MATCH(m.title) AGAINST (");
-            for (String word : title.split(" ")) {
+            for (String word : title.split("\\s+")) {
                 sb.append("? ");
                 params.add("+" + word.toLowerCase() + "*");
             }
@@ -86,16 +86,7 @@ public class MovieListQuery extends ConditionalQuery {
      */
 
     public final void setTitle(String title) {
-        if (title != null && !title.isEmpty()) {
-            // Tokenize the input title and use full-text search
-            String[] tokens = title.trim().split("\\s+");
-            StringBuilder fullTextSearch = new StringBuilder();
-            for (String token : tokens) {
-                fullTextSearch.append("+").append(token).append("* ");
-            }
-            whereClauses.add("MATCH(m.title) AGAINST (? IN BOOLEAN MODE)");
-            params[paramCount++] = fullTextSearch.toString().trim();
-        }
+        this.title = title;
         pleaseUpdate = true;
     }
 
