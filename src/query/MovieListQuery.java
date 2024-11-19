@@ -32,6 +32,7 @@ public class MovieListQuery extends ConditionalQuery {
         /* reset state */
         selectClauses.subList(1, selectClauses.size()).clear();
         joinClauses.subList(1, joinClauses.size()).clear();
+        whereClauses.clear();
         params.clear();
 
         /* search clauses */
