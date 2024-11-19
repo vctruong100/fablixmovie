@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="shared.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="single-movie.js" defer></script>
+    <script src="autocomplete.js" defer></script>
 </head>
 <body class="centered-page">
 <nav class="navbar">
@@ -16,7 +17,8 @@
         <a href="shoppingcart.html">Checkout</a>
     </div>
     <form id="search_form">
-        <input type="text" name="title" placeholder="Search by Title">
+        <input type="text" id="title_search_box" class="mainpage-title-search-box" name="title" placeholder="Search by Title" autocomplete="off">
+        <div id="autocomplete_dropdown" class="mainpage-dropdown dropdown"></div>
         <input type="number" name="year" placeholder="Search by Year">
         <input type="text" name="director" placeholder="Search by Director">
         <input type="text" name="star" placeholder="Search by Star">

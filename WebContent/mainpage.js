@@ -53,15 +53,3 @@ jQuery("#logout_button").on("click", function() {
         }
     });
 });
-
-// Handle search form submission
-jQuery("#search_form").submit((event) => {
-    event.preventDefault();
-    const title = jQuery('input[name="title"]').val();
-    const year = jQuery('input[name="year"]').val();
-    const director = jQuery('input[name="director"]').val();
-    const star = jQuery('input[name="star"]').val();
-
-    let searchQuery = `${resultsUrl}&title=${title}&year=${year}&director=${director}&star=${star}`;
-    window.location.href = searchQuery;
-});

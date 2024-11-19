@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="movielist.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="movielist.js" defer></script>
+    <script src="autocomplete.js" defer></script>
 </head>
 <body>
 <!-- Navigation Bar -->
@@ -19,7 +20,8 @@
     <!-- Search Form -->
     <form id="search-form" class="navbar-search">
         <input type="hidden" name="page" value="1">
-        <input type="text" name="title" placeholder="Search by Title">
+        <input type="text" id="title_search_box" name="title" placeholder="Search by Title" autocomplete="off">
+        <div id="autocomplete_dropdown" class="dropdown"></div>
         <input type="number" name="year" placeholder="Search by Year">
         <input type="text" name="director" placeholder="Search by Director">
         <input type="text" name="star" placeholder="Search by Star">

@@ -25,3 +25,51 @@
     background-color: #e9eef5;
     color: #2e3a4e;
 }
+
+
+.mainpage-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid #cfd4d9;
+    background-color: #ffffff;
+    border-radius: 5px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    display: none;
+}
+
+.mainpage-dropdown div {
+    padding: 10px;
+    font-size: 14px;
+    color: #2e3a4e;
+    cursor: pointer;
+    border-bottom: 1px solid #e0e6ec;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.mainpage-dropdown div:hover {
+    background-color: #f9fafc;
+    color: #357abd;
+}
+
+.mainpage-title-search-box {
+    flex: 1;
+    margin: 10px;
+    padding: 10px;
+    border: 1px solid #cfd4d9;
+    border-radius: 5px;
+    background-color: #f9fafc;
+    color: #2e3a4e;
+    position: relative;
+}
+
+.mainpage-dropdown .highlight {
+    background-color: #f9fafc;
+    color: #357abd;
+}

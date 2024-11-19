@@ -77,8 +77,6 @@ titleSearchBox.on("input", function () {
 
 titleSearchBox.on("keydown", function (event) {
     const suggestions = dropdown.children(".suggestion-item");
-    console.log("Key pressed:", event.key);
-    console.log("Current index before:", currentIndex);
     if (event.key === "ArrowDown") {
         event.preventDefault();
         if (currentIndex < suggestions.length - 1) {
@@ -130,3 +128,15 @@ function scrollToSuggestion(element) {
         dropdown.scrollTop(elementTop);
     }
 }
+
+
+jQuery("#search_form").submit((event) => {
+    event.preventDefault();
+    const title = jQuery('input[name="title"]').val();
+    const year = jQuery('input[name="year"]').val();
+    const director = jQuery('input[name="director"]').val();
+    const star = jQuery('input[name="star"]').val();
+
+    let searchQuery = `movielist.html?page=1&title=${title}&year=${year}&director=${director}&star=${star}`;
+    window.location.href = searchQuery;
+});

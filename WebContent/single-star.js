@@ -30,7 +30,6 @@ function backToList() {
     window.location.href = `movielist.html`;
 }
 
-
 jQuery("#results-btn").on("click", function(event) {
     event.preventDefault();
     backToList();
@@ -46,15 +45,4 @@ jQuery.ajax({
     method: "GET",     // Request method
     url: "api/single-star?id=" + new URLSearchParams(window.location.search).get('id'),  // Request URL with id parameter
     success: (resultData) => handleStarResult(resultData)  // Success callback
-});
-
-jQuery("#search_form").submit((event) => {
-    event.preventDefault();
-    const title = jQuery('input[name="title"]').val();
-    const year = jQuery('input[name="year"]').val();
-    const director = jQuery('input[name="director"]').val();
-    const star = jQuery('input[name="star"]').val();
-
-    let searchQuery = `movielist.html?page=1&title=${title}&year=${year}&director=${director}&star=${star}`;
-    window.location.href = searchQuery;
 });
