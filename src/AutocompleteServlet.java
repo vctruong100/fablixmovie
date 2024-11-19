@@ -52,7 +52,7 @@ public class AutocompleteServlet extends HttpServlet {
 
         // Execute the full-text search query
         try (Connection conn = dataSource.getConnection()) {
-            String sql = "SELECT title FROM movies WHERE MATCH(title) AGAINST (? IN BOOLEAN MODE) LIMIT 10";
+            String sql = "SELECT id, title FROM movies WHERE MATCH(title) AGAINST (? IN BOOLEAN MODE) LIMIT 10";
             try (PreparedStatement statement = conn.prepareStatement(sql)) {
                 statement.setString(1, searchQuery);
 
@@ -60,6 +60,7 @@ public class AutocompleteServlet extends HttpServlet {
                     while (rs.next()) {
                         JsonObject suggestion = new JsonObject();
                         suggestion.addProperty("title", rs.getString("title"));
+                        suggestion.addProperty("movie_id", rs.getString("id"));
                         suggestions.add(suggestion);
                     }
                 }

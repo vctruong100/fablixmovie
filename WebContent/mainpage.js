@@ -1,9 +1,4 @@
 let resultsUrl = "movielist.html?page=1";
-let cache = {}; // Cache for storing previous queries and their results
-let typingTimer;
-const typingDelay = 300; // Delay time in milliseconds
-const titleSearchBox = $("#title_search_box");
-const dropdown = $("#autocomplete_dropdown");
 
 // Fetch genres from the server and populate the genre list
 function handleGenreResult(resultData) {
@@ -69,55 +64,4 @@ jQuery("#search_form").submit((event) => {
 
     let searchQuery = `${resultsUrl}&title=${title}&year=${year}&director=${director}&star=${star}`;
     window.location.href = searchQuery;
-});
-
-// Function to perform the autocomplete search
-function performSearch(query) {
-    if (cache[query]) {
-        console.log("Using cached results for:", query);
-        displaySuggestions(cache[query]);
-    } else {
-        // Otherwise, make an AJAX request to the backend
-        console.log("Fetching results from server for:", query);
-        $.ajax({
-            url: "api/autocomplete",
-            method: "GET",
-            data: { query: query },
-            success: function (data) {
-                cache[query] = data;
-                displaySuggestions(data);
-            },
-            error: function () {
-                console.error("Failed to fetch autocomplete suggestions.");
-            }
-        });
-    }
-}
-
-// Function to display the autocomplete suggestions
-function displaySuggestions(suggestions) {
-    dropdown.empty().hide();
-    if (suggestions.length > 0) {
-        suggestions.forEach(suggestion => {
-            const suggestionDiv = $("<div>").text(suggestion.title);
-            suggestionDiv.on("click", function () {
-                titleSearchBox.val(suggestion.title);
-                dropdown.hide();
-            });
-            dropdown.append(suggestionDiv);
-        });
-        dropdown.show();
-    }
-}
-
-// Event listener for the title search box
-titleSearchBox.on("input", function () {
-    clearTimeout(typingTimer);
-    const query = $(this).val().trim();
-
-    if (query.length >= 3) {
-        typingTimer = setTimeout(() => performSearch(query), typingDelay);
-    } else {
-        dropdown.hide();
-    }
 });
