@@ -5,6 +5,7 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.ArrayList;
+import java.io.File;
 
 /*
  * Collects rows based on
@@ -24,6 +25,7 @@ abstract class ConditionalQuery extends BaseQuery {
     protected final List<String> joinClauses;
     protected final List<String> whereClauses;
     protected final List<String> params;
+    protected final boolean fuzzySearch;
 
     protected String[] order;
     protected boolean pleaseUpdate;
@@ -37,6 +39,7 @@ abstract class ConditionalQuery extends BaseQuery {
         joinClauses = new ArrayList<>();
         whereClauses = new ArrayList<>();
         params = new ArrayList<>();
+        fuzzySearch = new File("edth.sql").isFile();
         limit = 10;
         offset = 0;
         order = null;
