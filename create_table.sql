@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS movies(
 	title varchar(100) not null,
 	year integer not null,
 	director varchar(100) not null
+    FULLTEXT (title)
 );
 
 -- create stars table
