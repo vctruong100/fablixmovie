@@ -45,11 +45,23 @@ public class SearchServlet extends HttpServlet {
              */
             QuerySession querySession = (QuerySession)request.getSession()
                     .getAttribute("query");
+
+            // Extract and process parameters for full-text search
+            String title = request.getParameter("title");
+            if (title != null && !title.isEmpty()) {
+                String[] tokens = title.split("\\s+");
+                StringBuilder fullTextSearchQuery = new StringBuilder();
+                for (String token : tokens) {
+                    fullTextSearchQuery.append("+").append(token).append("* ");
+                }
+                title = fullTextSearchQuery.toString().trim();
+            }
+
             querySession.setSearchParameters(
                     QuerySession.parseLimit(request.getParameter("limit")),
                     QuerySession.parsePage(request.getParameter("page")),
                     QuerySession.parseSortCategory(request.getParameter("sortBy")),
-                    request.getParameter("title"),
+                    title,
                     request.getParameter("year"),
                     request.getParameter("director"),
                     request.getParameter("star")
