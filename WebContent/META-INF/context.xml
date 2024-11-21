@@ -28,7 +28,7 @@
               maxWaitMillis="10000"/>
 
     <!-- Replica DataSource for reads -->
-    <Resource name="jdbc/source"
+    <Resource name="jdbc/replica"
               auth="Container"
               driverClassName="com.mysql.cj.jdbc.Driver"
               type="javax.sql.DataSource"
