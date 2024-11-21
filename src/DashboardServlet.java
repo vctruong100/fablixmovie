@@ -15,15 +15,18 @@ import java.sql.*;
 @WebServlet(name = "DashboardServlet", urlPatterns = "/api/dashboard")
 public class DashboardServlet extends HttpServlet {
 
-    private DataSource dataSource;
+    private DataSource sourceDataSource;
+    private DataSource replicaDataSource;
 
     public void init(ServletConfig config) {
         try {
-            dataSource = (DataSource) new InitialContext().lookup("java:comp/env/jdbc/moviedb");
+            sourceDataSource = (DataSource) new InitialContext().lookup("java:comp/env/jdbc/source");
+            replicaDataSource = (DataSource) new InitialContext().lookup("java:comp/env/jdbc/replica");
         } catch (NamingException e) {
             e.printStackTrace();
         }
     }
+
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
         response.setContentType("application/json");
         String action = request.getParameter("action");
@@ -55,7 +58,7 @@ public class DashboardServlet extends HttpServlet {
         String starName = request.getParameter("star");
         String genreName = request.getParameter("genre");
 
-        try (Connection conn = dataSource.getConnection()) {
+        try (Connection conn = sourceDataSource.getConnection()) {
             CallableStatement cs = conn.prepareCall("{CALL add_movie(?, ?, ?, ?, ?, ?)}");
             cs.setString(1, movieTitle);
             cs.setInt(2, movieYear);
@@ -101,7 +104,7 @@ public class DashboardServlet extends HttpServlet {
         String birthYearStr = request.getParameter("birthYear");
         Integer birthYear = (birthYearStr == null || birthYearStr.isEmpty()) ? null : Integer.parseInt(birthYearStr);
 
-        try (Connection conn = dataSource.getConnection()) {
+        try (Connection conn = sourceDataSource.getConnection()) {
             // Generate a new star ID with prefix "nm"
             String starId = "nm0000001";
             String selectMaxStarIdQuery = "SELECT MAX(id) FROM stars WHERE id LIKE 'nm%'";
@@ -141,7 +144,7 @@ public class DashboardServlet extends HttpServlet {
     private void handleAddGenre(HttpServletRequest request, HttpServletResponse response) throws IOException {
         String genreName = request.getParameter("genreName");
 
-        try (Connection conn = dataSource.getConnection()) {
+        try (Connection conn = sourceDataSource.getConnection()) {
             // Check if genre already exists
             String selectGenreQuery = "SELECT id FROM genres WHERE name = ?";
             try (PreparedStatement selectStmt = conn.prepareStatement(selectGenreQuery)) {
@@ -233,7 +236,7 @@ public class DashboardServlet extends HttpServlet {
 
     // Retrieves metadata for all tables in the database
     private void handleMetadataRequest(HttpServletResponse response) throws IOException {
-        try (Connection conn = dataSource.getConnection()) {
+        try (Connection conn = replicaDataSource.getConnection()) {
             DatabaseMetaData metaData = conn.getMetaData();
             JsonArray tablesJson = new JsonArray();
 

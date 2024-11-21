@@ -22,11 +22,11 @@ import java.sql.ResultSet;
 @WebServlet(name = "LoginServlet", urlPatterns = "/api/login")
 public class LoginServlet extends HttpServlet {
     private static final long serialVersionUID = 10L;
-    private DataSource dataSource;
+    private DataSource replicaDataSource;
 
     public void init(ServletConfig config) {
         try {
-            dataSource = (DataSource) new InitialContext().lookup("java:comp/env/jdbc/moviedb");
+            replicaDataSource = (DataSource) new InitialContext().lookup("java:comp/env/jdbc/replica");
         } catch (NamingException e) {
             e.printStackTrace();
         }
@@ -36,26 +36,26 @@ public class LoginServlet extends HttpServlet {
      * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
      */
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        String gRecaptchaResponse = request.getParameter("g-recaptcha-response");
-
-        try {
-            // Verify reCAPTCHA
-            RecaptchaVerifyUtils.verify(gRecaptchaResponse);
-        } catch (Exception e) {
-            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-            JsonObject responseJsonObject = new JsonObject();
-            responseJsonObject.addProperty("status", "fail");
-            responseJsonObject.addProperty("message", "reCAPTCHA verification failed");
-            response.getWriter().write(responseJsonObject.toString());
-            return;
-        }
+//        String gRecaptchaResponse = request.getParameter("g-recaptcha-response");
+//
+//        try {
+//            // Verify reCAPTCHA
+//            RecaptchaVerifyUtils.verify(gRecaptchaResponse);
+//        } catch (Exception e) {
+//            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+//            JsonObject responseJsonObject = new JsonObject();
+//            responseJsonObject.addProperty("status", "fail");
+//            responseJsonObject.addProperty("message", "reCAPTCHA verification failed");
+//            response.getWriter().write(responseJsonObject.toString());
+//            return;
+//        }
 
         String username = request.getParameter("username");
         String password = request.getParameter("password");
         String userType = request.getParameter("userType");
 
         JsonObject responseJsonObject = new JsonObject();
-        try (Connection conn = dataSource.getConnection()) {
+        try (Connection conn = replicaDataSource.getConnection()) {
             boolean loginSuccess = false;
 
             // Check if the user is a customer or an employee

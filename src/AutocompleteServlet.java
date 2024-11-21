@@ -17,11 +17,11 @@ import java.sql.ResultSet;
 @WebServlet(name = "AutocompleteServlet", urlPatterns = "/api/autocomplete")
 public class AutocompleteServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
-    private DataSource dataSource;
+    private DataSource replicaDataSource;
 
     public void init(ServletConfig config) {
         try {
-            dataSource = (DataSource) new InitialContext().lookup("java:comp/env/jdbc/moviedb");
+            replicaDataSource = (DataSource) new InitialContext().lookup("java:comp/env/jdbc/replica");
         } catch (NamingException e) {
             e.printStackTrace();
         }
@@ -51,7 +51,7 @@ public class AutocompleteServlet extends HttpServlet {
         JsonArray suggestions = new JsonArray();
 
         // Execute the full-text search query
-        try (Connection conn = dataSource.getConnection()) {
+        try (Connection conn = replicaDataSource.getConnection()) {
             String sql = "SELECT id, title FROM movies WHERE MATCH(title) AGAINST (? IN BOOLEAN MODE) LIMIT 10";
             try (PreparedStatement statement = conn.prepareStatement(sql)) {
                 statement.setString(1, searchQuery);

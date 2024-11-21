@@ -23,11 +23,11 @@ public class SingleStarServlet extends HttpServlet {
     private static final long serialVersionUID = 2L;
 
     // Create a dataSource which registered in web.xml
-    private DataSource dataSource;
+    private DataSource replicaDataSource;
 
     public void init(ServletConfig config) {
         try {
-            dataSource = (DataSource) new InitialContext().lookup("java:comp/env/jdbc/moviedb");
+            replicaDataSource = (DataSource) new InitialContext().lookup("java:comp/env/jdbc/replica");
         } catch (NamingException e) {
             e.printStackTrace();
         }
@@ -53,7 +53,7 @@ public class SingleStarServlet extends HttpServlet {
         PrintWriter out = response.getWriter();
 
         // Get a connection from dataSource and let resource manager close the connection after usage.
-        try (Connection conn = dataSource.getConnection()) {
+        try (Connection conn = replicaDataSource.getConnection()) {
             // Get a connection from dataSource
 
             /*

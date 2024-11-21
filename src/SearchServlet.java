@@ -19,17 +19,6 @@ import java.io.PrintWriter;
 public class SearchServlet extends HttpServlet {
     private static final long serialVersionUID = 200L;
 
-    // Create a dataSource which is registered in web.xml
-    private DataSource dataSource;
-
-    public void init(ServletConfig config) {
-        try {
-            dataSource = (DataSource) new InitialContext().lookup("java:comp/env/jdbc/moviedb");
-        } catch (NamingException e) {
-            e.printStackTrace();
-        }
-    }
-
     /**
      * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse
      * response)

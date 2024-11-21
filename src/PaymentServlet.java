@@ -20,7 +20,6 @@ import java.util.Map;
 @WebServlet(name = "PaymentServlet", urlPatterns = "/api/payment")
 public class PaymentServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
-    private DataSource dataSource;
 
     private static class CustomerInfo {
         int customerId;
@@ -36,14 +35,17 @@ public class PaymentServlet extends HttpServlet {
         }
     }
 
-    public void init(ServletConfig config) throws ServletException {
+    private DataSource sourceDataSource;
+    private DataSource replicaDataSource;
+
+    public void init(ServletConfig config) {
         try {
-            dataSource = (DataSource) new InitialContext().lookup("java:comp/env/jdbc/moviedb");
+            sourceDataSource = (DataSource) new InitialContext().lookup("java:comp/env/jdbc/source");
+            replicaDataSource = (DataSource) new InitialContext().lookup("java:comp/env/jdbc/replica");
         } catch (NamingException e) {
-            throw new ServletException("Unable to lookup DataSource", e);
+            e.printStackTrace();
         }
     }
-
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         response.setContentType("application/json");
@@ -93,7 +95,7 @@ public class PaymentServlet extends HttpServlet {
         if (isPaymentValid) {
             String saleInsertQuery = "INSERT INTO sales (customerId, movieId, saleDate) VALUES (?, ?, NOW())";
             System.out.println("Payment is valid");
-            try (Connection conn = dataSource.getConnection()) {
+            try (Connection conn = sourceDataSource.getConnection()) {
                 conn.setAutoCommit(false);
 
                 Map<String, ShoppingCartSession.CartItem> shoppingCart =
@@ -207,7 +209,7 @@ public class PaymentServlet extends HttpServlet {
         }
 
         // Connect to the database to validate the payment information
-        try (Connection conn = dataSource.getConnection()) {
+        try (Connection conn = replicaDataSource.getConnection()) {
             String query = "SELECT * FROM creditcards "
                     + "WHERE firstName = ? AND lastName = ? AND id = ? AND expiration = ?";
             try (PreparedStatement statement = conn.prepareStatement(query)) {
@@ -232,7 +234,7 @@ public class PaymentServlet extends HttpServlet {
 
     private CustomerInfo getCustomerInfo(Object username) {
         String customerQuery = "SELECT id, firstName, lastName, ccId FROM customers WHERE email = ?";
-        try (Connection conn = dataSource.getConnection();
+        try (Connection conn = replicaDataSource.getConnection();
              PreparedStatement statement = conn.prepareStatement(customerQuery)) {
             statement.setString(1, (String) username);
             ResultSet rs = statement.executeQuery();
