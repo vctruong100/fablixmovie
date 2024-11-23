@@ -36,19 +36,19 @@ public class LoginServlet extends HttpServlet {
      * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
      */
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
-//        String gRecaptchaResponse = request.getParameter("g-recaptcha-response");
-//
-//        try {
-//            // Verify reCAPTCHA
-//            RecaptchaVerifyUtils.verify(gRecaptchaResponse);
-//        } catch (Exception e) {
-//            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-//            JsonObject responseJsonObject = new JsonObject();
-//            responseJsonObject.addProperty("status", "fail");
-//            responseJsonObject.addProperty("message", "reCAPTCHA verification failed");
-//            response.getWriter().write(responseJsonObject.toString());
-//            return;
-//        }
+        String gRecaptchaResponse = request.getParameter("g-recaptcha-response");
+
+        try {
+            // Verify reCAPTCHA
+            RecaptchaVerifyUtils.verify(gRecaptchaResponse);
+        } catch (Exception e) {
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            JsonObject responseJsonObject = new JsonObject();
+            responseJsonObject.addProperty("status", "fail");
+            responseJsonObject.addProperty("message", "reCAPTCHA verification failed");
+            response.getWriter().write(responseJsonObject.toString());
+            return;
+        }
 
         String username = request.getParameter("username");
         String password = request.getParameter("password");
