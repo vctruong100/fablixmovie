@@ -13,7 +13,7 @@ if [ "$OSTYPE" != "linux-gnu" ]; then
 	exit 1
 fi
 
-apt-get install sudo > /dev/null
+apt-get install -y sudo > /dev/null
 sudo apt-get install -y gcc make mysql-server libmysqlclient-dev > /dev/null
 
 if [ ! -d "${PLUGIN_DIR}" ]; then
@@ -29,9 +29,9 @@ tar -xzf ./toolkit_2021-05-18.tgz
 pushd toolkit/src/udf/mysql/ed > /dev/null
 make libedth.so
 if [ $? -eq 0 ]; then
-	mv libedth.so "${PLUGIN_DIR}"
+	sudo mv libedth.so "${PLUGIN_DIR}"
 	BAD_CNT=$(($BAD_CNT + $?))
-	mv edth.sql ~1
+	sudo mv edth.sql ~1
 	BAD_CNT=$(($BAD_CNT + $?))
 fi
 popd > /dev/null
