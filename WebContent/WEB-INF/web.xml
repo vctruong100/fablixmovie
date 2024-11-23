@@ -31,6 +31,7 @@
         <res-auth>Container</res-auth>
     </resource-ref>
 
+<!-- Note: HTTPS is optional for scaled version in project 4
     <security-constraint>
         <web-resource-collection>
             <web-resource-name>Dashboard</web-resource-name>
@@ -40,4 +41,5 @@
             <transport-guarantee>CONFIDENTIAL</transport-guarantee>
         </user-data-constraint>
     </security-constraint>
+-->
 </web-app>
