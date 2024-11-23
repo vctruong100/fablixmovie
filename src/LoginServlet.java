@@ -22,11 +22,11 @@ import java.sql.ResultSet;
 @WebServlet(name = "LoginServlet", urlPatterns = "/api/login")
 public class LoginServlet extends HttpServlet {
     private static final long serialVersionUID = 10L;
-    private DataSource replicaDataSource;
+    private DataSource dataSource;
 
     public void init(ServletConfig config) {
         try {
-            replicaDataSource = (DataSource) new InitialContext().lookup("java:comp/env/jdbc/replica");
+            dataSource = (DataSource) new InitialContext().lookup("java:comp/env/jdbc/moviedb");
         } catch (NamingException e) {
             e.printStackTrace();
         }
@@ -55,7 +55,7 @@ public class LoginServlet extends HttpServlet {
         String userType = request.getParameter("userType");
 
         JsonObject responseJsonObject = new JsonObject();
-        try (Connection conn = replicaDataSource.getConnection()) {
+        try (Connection conn = dataSource.getConnection()) {
             boolean loginSuccess = false;
 
             // Check if the user is a customer or an employee

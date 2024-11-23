@@ -25,11 +25,11 @@ public class MovieListServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
 
     // Create a dataSource which is registered in web.xml
-    private DataSource replicaDataSource;
+    private DataSource dataSource;
 
     public void init(ServletConfig config) {
         try {
-            replicaDataSource = (DataSource) new InitialContext().lookup("java:comp/env/jdbc/replica");
+            dataSource = (DataSource) new InitialContext().lookup("java:comp/env/jdbc/moviedb");
         } catch (NamingException e) {
             e.printStackTrace();
         }
@@ -68,7 +68,7 @@ public class MovieListServlet extends HttpServlet {
         PrintWriter out = response.getWriter();
 
         // Get a connection from dataSource and let resource manager close the connection after usage.
-        try (Connection conn = replicaDataSource.getConnection()) {
+        try (Connection conn = dataSource.getConnection()) {
             JsonObject responseObject = new JsonObject();
             JsonArray resultArray = new JsonArray();
 

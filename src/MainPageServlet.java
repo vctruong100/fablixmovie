@@ -19,11 +19,11 @@ import java.sql.ResultSet;
 public class MainPageServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
 
-    private DataSource replicaDataSource;
+    private DataSource dataSource;
 
     public void init(ServletConfig config) {
         try {
-            replicaDataSource = (DataSource) new InitialContext().lookup("java:comp/env/jdbc/replica");
+            dataSource = (DataSource) new InitialContext().lookup("java:comp/env/jdbc/moviedb");
         } catch (NamingException e) {
             e.printStackTrace();
         }
@@ -38,7 +38,7 @@ public class MainPageServlet extends HttpServlet {
 
         PrintWriter out = response.getWriter();
 
-        try (Connection conn = replicaDataSource.getConnection()) {
+        try (Connection conn = dataSource.getConnection()) {
             JsonArray genresJsonArray = new JsonArray();
 
             String genresQuery = "SELECT * FROM genres ORDER BY name ASC";

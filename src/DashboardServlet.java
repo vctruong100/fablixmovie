@@ -15,13 +15,11 @@ import java.sql.*;
 @WebServlet(name = "DashboardServlet", urlPatterns = "/api/dashboard")
 public class DashboardServlet extends HttpServlet {
 
-    private DataSource sourceDataSource;
-    private DataSource replicaDataSource;
+    private DataSource dataSource;
 
     public void init(ServletConfig config) {
         try {
-            sourceDataSource = (DataSource) new InitialContext().lookup("java:comp/env/jdbc/source");
-            replicaDataSource = (DataSource) new InitialContext().lookup("java:comp/env/jdbc/replica");
+            dataSource = (DataSource) new InitialContext().lookup("java:comp/env/jdbc/moviedb");
         } catch (NamingException e) {
             e.printStackTrace();
         }
@@ -58,7 +56,7 @@ public class DashboardServlet extends HttpServlet {
         String starName = request.getParameter("star");
         String genreName = request.getParameter("genre");
 
-        try (Connection conn = sourceDataSource.getConnection()) {
+        try (Connection conn = dataSource.getConnection()) {
             CallableStatement cs = conn.prepareCall("{CALL add_movie(?, ?, ?, ?, ?, ?)}");
             cs.setString(1, movieTitle);
             cs.setInt(2, movieYear);
@@ -104,7 +102,7 @@ public class DashboardServlet extends HttpServlet {
         String birthYearStr = request.getParameter("birthYear");
         Integer birthYear = (birthYearStr == null || birthYearStr.isEmpty()) ? null : Integer.parseInt(birthYearStr);
 
-        try (Connection conn = sourceDataSource.getConnection()) {
+        try (Connection conn = dataSource.getConnection()) {
             // Generate a new star ID with prefix "nm"
             String starId = "nm0000001";
             String selectMaxStarIdQuery = "SELECT MAX(id) FROM stars WHERE id LIKE 'nm%'";
@@ -144,7 +142,7 @@ public class DashboardServlet extends HttpServlet {
     private void handleAddGenre(HttpServletRequest request, HttpServletResponse response) throws IOException {
         String genreName = request.getParameter("genreName");
 
-        try (Connection conn = sourceDataSource.getConnection()) {
+        try (Connection conn = dataSource.getConnection()) {
             // Check if genre already exists
             String selectGenreQuery = "SELECT id FROM genres WHERE name = ?";
             try (PreparedStatement selectStmt = conn.prepareStatement(selectGenreQuery)) {
@@ -236,7 +234,7 @@ public class DashboardServlet extends HttpServlet {
 
     // Retrieves metadata for all tables in the database
     private void handleMetadataRequest(HttpServletResponse response) throws IOException {
-        try (Connection conn = replicaDataSource.getConnection()) {
+        try (Connection conn = dataSource.getConnection()) {
             DatabaseMetaData metaData = conn.getMetaData();
             JsonArray tablesJson = new JsonArray();
 

@@ -27,11 +27,11 @@ import java.util.Map;
 @WebServlet(name = "ShoppingCartServlet", urlPatterns = "/api/shoppingcart")
 public class ShoppingCartServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
-    private DataSource replicaDataSource;
+    private DataSource dataSource;
 
     public void init(ServletConfig config) {
         try {
-            replicaDataSource = (DataSource) new InitialContext().lookup("java:comp/env/jdbc/replica");
+            dataSource = (DataSource) new InitialContext().lookup("java:comp/env/jdbc/moviedb");
         } catch (NamingException e) {
             e.printStackTrace();
         }
@@ -57,7 +57,7 @@ public class ShoppingCartServlet extends HttpServlet {
         JsonArray itemsArray = new JsonArray();
 
         if (!cart.isEmpty()) {
-            try (Connection conn = replicaDataSource.getConnection()) {
+            try (Connection conn = dataSource.getConnection()) {
                 for (var entry : cart.entrySet()) {
                     String movieId = entry.getKey();
                     CartItem cartItem = entry.getValue();
@@ -128,7 +128,7 @@ public class ShoppingCartServlet extends HttpServlet {
     }
 
     private BigDecimal fetchPriceFromDatabase(String movieId) {
-        try (Connection conn = replicaDataSource.getConnection()) {
+        try (Connection conn = dataSource.getConnection()) {
             String query = "SELECT price FROM prices WHERE movieId = ?";
             try (PreparedStatement statement = conn.prepareStatement(query)) {
                 statement.setString(1, movieId);

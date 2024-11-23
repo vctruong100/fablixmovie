@@ -35,17 +35,16 @@ public class PaymentServlet extends HttpServlet {
         }
     }
 
-    private DataSource sourceDataSource;
-    private DataSource replicaDataSource;
+    private DataSource dataSource;
 
     public void init(ServletConfig config) {
         try {
-            sourceDataSource = (DataSource) new InitialContext().lookup("java:comp/env/jdbc/source");
-            replicaDataSource = (DataSource) new InitialContext().lookup("java:comp/env/jdbc/replica");
+            dataSource = (DataSource) new InitialContext().lookup("java:comp/env/jdbc/moviedb");
         } catch (NamingException e) {
             e.printStackTrace();
         }
     }
+
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         response.setContentType("application/json");
@@ -95,7 +94,7 @@ public class PaymentServlet extends HttpServlet {
         if (isPaymentValid) {
             String saleInsertQuery = "INSERT INTO sales (customerId, movieId, saleDate) VALUES (?, ?, NOW())";
             System.out.println("Payment is valid");
-            try (Connection conn = sourceDataSource.getConnection()) {
+            try (Connection conn = dataSource.getConnection()) {
                 conn.setAutoCommit(false);
 
                 Map<String, ShoppingCartSession.CartItem> shoppingCart =
@@ -209,7 +208,7 @@ public class PaymentServlet extends HttpServlet {
         }
 
         // Connect to the database to validate the payment information
-        try (Connection conn = replicaDataSource.getConnection()) {
+        try (Connection conn = dataSource.getConnection()) {
             String query = "SELECT * FROM creditcards "
                     + "WHERE firstName = ? AND lastName = ? AND id = ? AND expiration = ?";
             try (PreparedStatement statement = conn.prepareStatement(query)) {
@@ -234,7 +233,7 @@ public class PaymentServlet extends HttpServlet {
 
     private CustomerInfo getCustomerInfo(Object username) {
         String customerQuery = "SELECT id, firstName, lastName, ccId FROM customers WHERE email = ?";
-        try (Connection conn = replicaDataSource.getConnection();
+        try (Connection conn = dataSource.getConnection();
              PreparedStatement statement = conn.prepareStatement(customerQuery)) {
             statement.setString(1, (String) username);
             ResultSet rs = statement.executeQuery();
