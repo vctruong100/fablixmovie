@@ -27,6 +27,32 @@ Project 4:
 - Helped resolve issues from deploying the load balancer on AWS
 
 ## Instruction of Deployment
+- Configure as many instances as necessary and designate a single master instance among them
+- Setup Tomcat for each instance and deploy the repo as a webapp (fab-project)
+- Enable fuzzy search by installing the edth toolkit either manually or by running `edth.sh` (tested on Ubuntu 22.04 LTS)
+- Configure SQL master/slave replication:
+  ```mysql
+  # master
+  create user 'repl'@'%' identified WITH mysql_native_password by 'slave66Pass$word';
+  grant replication slave on *.* to 'repl'@'%';
+  
+  # master: note File/Position columns
+  show master status;
+  
+  # slave
+  CHANGE MASTER TO MASTER_HOST={MASTER_PRIVATE_IP}, MASTER_USER='repl', MASTER_PASSWORD='slave66{ass$word',
+  MASTER_LOG_FILE={FILE}, MASTER_LOG_POS={POSITION};
+  
+  start slave;
+  show slave status;
+   ```
+- To extend the cluster, clone any slave instance and make changes to the load balancer to reflect the new instance
+- HTTP setup:
+  - In a separate instance (not Tomcat), configure the Apache2 load balancer in proxy/reverse proxy pass mode on port 80
+  - Point the load balancer to each Tomcat instance IP address at port 8080
+  - This instance is the public facing server to the webapp
+- HTTPS is optional for Project 4 and thus not supported
+  
 
 # Connection Pooling
 - ## Filename/Path of All Code/Configuration Files using JDBC Connection Pooling:
@@ -36,7 +62,7 @@ Project 4:
   - Connection pooling is configured in context.xml using the org.apache.tomcat.jdbc.pool.DataSourceFactory 
     with a maximum of 100 connections, 30 idle connections and a 10-second wait time
   - Servlets use DataSource to fetch connections:
-  ```
+  ```java
   dataSource = (DataSource) new InitialContext().lookup("java:comp/env/jdbc/moviedb");
   try (Connection conn = dataSource.getConnection()) {
   PreparedStatement ps = conn.prepareStatement(query);
@@ -67,7 +93,7 @@ Project 4:
   - MySQL master-replica replication automatically routes:
     - Write operations to the master database.
       - Example: DashboardServlet performs a write operation to add a new movie.
-  ```
+  ```java
   CallableStatement cs = conn.prepareCall("{CALL add_movie(?, ?, ?, ?, ?, ?)}");
   cs.setString(1, title);
   cs.setInt(2, year);
