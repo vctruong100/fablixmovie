@@ -94,6 +94,9 @@ titleSearchBox.on("keydown", function (event) {
             $(suggestions[currentIndex]).addClass("highlight");
 
             scrollToSuggestion(suggestions[currentIndex]);
+        } else {
+            currentIndex = -1;
+            $(".highlight").removeClass("highlight");
         }
     } else if (event.key === "Enter") {
         event.preventDefault();
