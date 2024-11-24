@@ -156,6 +156,9 @@ abstract class ConditionalQuery extends BaseQuery {
      * (the absolute first thing called)
      */
     private void buildSubQueries() {
+        if (subQueries.isEmpty()) {
+            return;
+        }
         builder.append("WITH ");
         for (String subQuery : subQueries) {
             builder.append(subQuery);
