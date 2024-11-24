@@ -23,7 +23,8 @@ Project 4:
 - Refined MovieListQuery to improve query structure and clarity.
 - Implemented initial full-text search
 - Developed edth.sh to install the edth toolkit for Levenshtein distance-based fuzzy search
-- Integrated fuzzy search in the backend
+- Integrated fuzzy search in the backend and autocomplete
+- Helped resolve issues from deploying the load balancer on AWS
 
 ## Instruction of Deployment
 
