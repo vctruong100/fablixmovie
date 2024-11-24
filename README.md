@@ -1,5 +1,5 @@
-## Extra Credit Domain Registration: https://fablixmovies.tech/fab-project/login.html
-- Credits to .Tech Domains for providing the free domain name for our project
+## Extra Credit: Fuzzy Search
+- Implemented a fuzzy search feature using the Levenshtein distance algorithm.
 
 ## Demo
 Project 1: https://www.youtube.com/watch?v=gUnYy8DNaRM
@@ -8,116 +8,81 @@ Project 2: https://www.youtube.com/watch?v=kSFtYlGfwkM
 
 Project 3: https://www.youtube.com/watch?v=IttZBBCscT4
 
-## Contributions
+Project 4:
+
+# General
+## Team5 Contributions
 ### Vinh
-- Integrated reCAPTCHA for login and added logout feature
-- Updated the dashboard with proper GET/POST handling and secure password encryption
-- Created a stored procedure add_movie for adding movies and stars to the database
-- Worked on HTTPS configuration and URL redirection for secure connections
-- Assisted in optimizing queries and updating the LoginFilter to handle customer and employee access
-- Recorded the Demo video and updated the README file
-- Registered a domain name on .tech and deployed the project on https://fablixmovies.tech/fab-project/login.html
+- Created AutocompleteServlet to support autocomplete search
+- Integrated autocomplete functionality into HTML, JS, and CSS.
+- Created Master/Slave routing for read/write operations on AWS
+- Scale project with Tomcat and MySQL cluster and load balancing on AWS
+- Created demo video for Project 4.
 
 ### Jason
-- Developed LoginFilter to handle dashboard and login URLs
-- Modified the database schema to support employee logins, prices, and multiple movies per sale
-- Migrated existing database records with scripts to include encrypted employee passwords and random movie prices
-- Implemented data parsing for XML files (main.xml, actors.xml, and casts.xml) and reported inconsistencies
-- Enhanced the security of the login process using prepared statements and proper password verification
-- Worked on parsing time optimization strategies for XML data
+- Refined MovieListQuery to improve query structure and clarity.
+- Implemented initial full-text search
+- Developed edth.sh to install the edth toolkit for Levenshtein distance-based fuzzy search
+- Integrated fuzzy search in the backend
 
-## Filenames with Prepared Statements
-- src/query/BaseQuery.java
-- src/query/ConditionalQuery.java
-- src/query/GroupingQuery.java
-- src/query/MovieGenresQuery.java
-- src/query/MovieListQuery.java
-- src/query/MovieQuery.java
-- src/query/MovieStarsQuery.java
-- src/query/StarMoviesQuery.java
-- src/query/StarQuery.java
-- src/DashboardServlet.java
-- src/LoginServlet.java
-- src/PaymentServlet.java
-- src/ShoppingCartServlet.java
-- src/UpdateSecurePassword.java
-- src/StanfordXmlParser.java
-- Note: SingleStarServlet, SingleMovieServlet and MovieListServlet use src/query/* under the hood (listed above)
+## Instruction of Deployment
 
-## Parsing Time Optimization Strategies
-### 1: In-Memory Caching for Duplicate Checking:
-- Implemented in-memory caching using hash maps and sets.
-- Efficiently checked for duplicate entries (e.g., actors, films, and cast relationships) before database insertion.
-- Significantly reduced redundant SQL queries.
+# Connection Pooling
+- ## Filename/Path of All Code/Configuration Files using JDBC Connection Pooling:
+  - context.xml: /WebContent/META-INF/context.xml
 
-### 2: Bulk Selection and Insertion of SQL Queries
-- Consolidated multiple SQL queries into bulk operations.
-- Reduced the number of database interactions by performing batch inserts and selections.
-- Enhanced the efficiency of data loading and minimized transaction overhead.
+- ## How Connection Pooling is Utilized in the Code:
+  - Connection pooling is configured in context.xml using the org.apache.tomcat.jdbc.pool.DataSourceFactory 
+    with a maximum of 100 connections, 30 idle connections and a 10-second wait time
+  - Servlets use DataSource to fetch connections:
+  ```
+  dataSource = (DataSource) new InitialContext().lookup("java:comp/env/jdbc/moviedb");
+  try (Connection conn = dataSource.getConnection()) {
+  PreparedStatement ps = conn.prepareStatement(query);
+  ResultSet rs = ps.executeQuery();
+  }
+  ```
+- ## Connection Pooling with 2 Backend SQL:
+  - In a master-slave setup:
+    - Write queries (e.g., insert, update) are routed to the master database.
+    - Read queries (e.g., select) are routed to slave databases.
+  - MySQL handles read/write routing internally when configured with master-replica replication. 
+    The application sends queries to the master, and replicas sync automatically for reads.
 
-### Performance Improvement 
-- Naive Implementation: The initial, unoptimized implementation took `626` seconds (over 10 minutes) to complete.
-- Optimized Implementation: After applying the bulk selection/insertion of SQL queries, the parser runs in roughly `30-50` seconds
-- After in-memory caching for duplicate checking optimization, the parser now takes `10-16` seconds, a substantial performance boost compared to the naive implementation
+# Master/Slave
+- ## Filename/Path of All Code/Configuration Files Routing Queries to Master/Slave SQL:
+  - context.xml: /WebContent/META-INF/context.xml
+  - AutocompleteServlet.java: /src/AutocompleteServlet.java
+  - DashboardServlet.java: /src/DashboardServlet.java
+  - LoginServlet.java: /src/LoginServlet.java
+  - MainPageServlet.java: /src/MainPageServlet.java
+  - MovieListServlet.java: /src/MovieListServlet.java
+  - PaymentServlet.java: /src/PaymentServlet.java
+  - ShoppingCartServlet.java: /src/ShoppingCartServlet.java
+  - SingleMovieServlet.java: /src/SingleMovieServlet.java
+  - SingleStarServlet.java: /src/SingleStarServlet.java
 
-## Inconsistent Data Reports
-The following report also gives an idea of how the XML parser handles inconsistencies when such are marked as warnings.
-### actors.xml
-- Missing or Empty Stage Name:
-  - If actors have no stage name or an empty stage name, these shall be reported as inconsistencies (none reported)
-- Invalid Date of Birth (DOB): 
-  - DOBs that cannot be parsed as integers or are formatted incorrectly.
-  - These are reported as warnings and set to NULL, which still makes it consistent
-  - Example: `ELEMENT actor 680: dob='n.a.' (WARNING);`
-- Duplicates
-  - Actors are marked as duplicates if they share the same stage name and dob, which is invalid
-  - Example: `ELEMENT actor 727: stagename='Wilford Brimley' (DUPLICATE);dob='null' (DUPLICATE);`
-### casts.xml
-- Missing Film ID (fid): 
-  - If cast entries do not have a film ID, they shall be marked as schema inconsistencies (none reported)
-- Missing Actor Name: 
-  - Some cast entries have no actor name or an empty actor name.
-  - Example: `ELEMENT m 6749: a='';`
-- Unresolved Film References: 
-  - Film IDs that do not exist in the parsed films database are flagged as missing references.
-  - Example: `ELEMENT m 72: f='AAd10' (MISS);`
-- Duplicate Cast Entries: 
-  - Identical cast relationships (same actor and film ID) are flagged as duplicates.
-  - Example: `ELEMENT m 13416: f='GC52' (DUPLICATE);a='Elizabeth Taylor' (DUPLICATE);`
-- Missing Actor in Database: 
-  - Actors referenced in the cast data but not present in the actor database are added with `dob=null`, and marked as warnings for potential data integrity issues.
-  - Example: `ELEMENT m 11302: a='Samuel Hinds' (WARNING) (MISS);`
-- Multiple Actor Entries Warning: 
-  - Casts with the same actor name but multiple records for that actor are flagged = ambiguity.
-  - Example: `ELEMENT m 11901: a='Harvey Stephens' (WARNING) (MULTIPLE);`
-
-### mains.xml
-- Missing Film ID (fid): 
-  - Films with no film ID or an empty film ID are marked as inconsistent.
-  - Example: `ELEMENT film 2530: fid=null;`
-- Empty Title: 
-  - Film titles that are missing or empty are flagged.
-  - Example: `ELEMENT film 9305: title='';`
-- Invalid Year: 
-  - Years that cannot be parsed as integers or are formatted incorrectly are reported. Unlike `actors.xml`, this is schema inconsistent.
-  - Example: `ELEMENT film 11636: year='19yy';`
-- Duplicate Films: 
-  - Films with the same title, year, and director are flagged as duplicates. The film id it references is shown.
-  - Example: `ELEMENT film 191: fid='Z0270';fid2='Z0260' (REFERENCE);title='Romeo and Juliet';year='1916';director='Unknown2';cats=['Romantic'] (PROPAGATED);`
-- Category Warnings: 
-  - Empty or unrecognized categories are flagged, but these are treated as warnings rather than schema violations.
-- Propagation of Categories: 
-  - Duplicate film entries are updated with new categories if applicable.
-  - Example: `ELEMENT film 10934: fid='BS6';fid2='BS4' (REFERENCE);title='For Love or Money';year='1993';director='Sonnenfeld';cats=['Comedy', 'Romantic'] (PROPAGATED);`
-  - Note in the example that `fid='BS4'` would have `Comedy` and `Romantic` applied to its categories if it didn't exist already.
-
-### Additional Notes
-- In the XML parser implementation, we map the cats codes to a list of textual categories according to http://infolab.stanford.edu/pub/movies/doc.html#CATS (more specifically sections 3.13 and 4.4)
-- We reported roughly `55` inconsistencies in `actors.xml`
-- About `14544` inconsistencies in `casts.xml`
-- About `112` inconsistencies in `mains.xml`
-- At insertion time, we report roughly `482` inconsistencies regarding duplication which are rectified by pointing the in-memory ids to the ids in the database
-- The XML parser correctly works even if the parser is re-run since it doesn't insert duplicates
+- ## How Read/Write Requests were Routed to Master/Slave SQL:
+  - MySQL master-replica replication automatically routes:
+    - Write operations to the master database.
+      - Example: DashboardServlet performs a write operation to add a new movie.
+  ```
+  CallableStatement cs = conn.prepareCall("{CALL add_movie(?, ?, ?, ?, ?, ?)}");
+  cs.setString(1, title);
+  cs.setInt(2, year);
+  cs.setString(3, director);
+  cs.setString(4, star);
+  cs.setString(5, genre);
+  cs.registerOutParameter(6, Types.VARCHAR);
+  cs.execute();
+  ```
+    - Read operations to replicas (if the query originates from replicas via appropriate load balancing).
+      - Example: MainPageServlet reads data (genres) from the db.
+  ```
+  String genresQuery = "SELECT * FROM genres ORDER BY name ASC";
+  PreparedStatement ps = conn.prepareStatement(genresQuery);
+  ResultSet rs = ps.executeQuery();
+  ``` 
 
 ## Requirements
 - Java 11.0.24
