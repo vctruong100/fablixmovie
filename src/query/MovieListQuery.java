@@ -30,34 +30,33 @@ public class MovieListQuery extends ConditionalQuery {
 
     public void update() {
         /* reset state */
+        subQueries.clear();
         selectClauses.subList(1, selectClauses.size()).clear();
         joinClauses.subList(1, joinClauses.size()).clear();
         whereClauses.clear();
         params.clear();
+        subParams.clear();
 
         /* search clauses */
         if (title != null && !title.isEmpty()) {
-            StringBuilder sb = new StringBuilder("MATCH(m.title) AGAINST (");
-            for (String word : title.split("\\s+")) {
-                sb.append("? ");
-                params.add("+" + word.toLowerCase() + "*");
-            }
-            sb.append("IN BOOLEAN MODE)");
-            whereClauses.add(sb.toString());
+            SearchSubQuery.extendFulltext("movies_t", "movies", "title",
+                    title, subQueries, subParams);
+            whereClauses.add("m.id IN (SELECT id FROM movies_t)");
         }
         if (director != null && !director.isEmpty()) {
-            whereClauses.add("LOWER(m.director) LIKE LOWER(?)");
-            params.add("%" + director + "%");
+            SearchSubQuery.extendLike("movies_d", "movies", "director",
+                    director, subQueries, subParams);
+            whereClauses.add("m.id IN (SELECT id FROM movies_d)");
         }
         if (year != null && !year.isEmpty()) {
             whereClauses.add("m.year = ?");
             params.add(year);
         }
         if (star != null && !star.isEmpty()) {
+            SearchSubQuery.extendLike("stars_n", "stars", "name",
+                    star, subQueries, subParams);
             joinClauses.add("JOIN stars_in_movies sim ON m.id = sim.movieId");
-            joinClauses.add("JOIN stars s ON sim.starId = s.id");
-            whereClauses.add("LOWER(s.name) LIKE LOWER(?)");
-            params.add("%" + star + "%");
+            joinClauses.add("JOIN stars_n s ON sim.starId = s.id");
         }
 
         /* browse clauses */
@@ -87,12 +86,16 @@ public class MovieListQuery extends ConditionalQuery {
      */
 
     public final void setTitle(String title) {
-        this.title = title != null ? title.trim() : null;
+        this.title = title != null
+                ? title.trim().replaceAll("\\s+", " ")
+                : null;
         pleaseUpdate = true;
     }
 
     public final void setDirector(String director) {
-        this.director = director != null ? director.trim() : null;
+        this.director = director != null
+                ? director.trim().replaceAll("\\s+", " ")
+                : null;
         pleaseUpdate = true;
     }
 
@@ -102,7 +105,9 @@ public class MovieListQuery extends ConditionalQuery {
     }
 
     public final void setStar(String star) {
-        this.star = star != null ? star.trim() : null;
+        this.star = star != null
+                ? star.trim().replaceAll("\\s+", " ")
+                : null;
         pleaseUpdate = true;
     }
 
