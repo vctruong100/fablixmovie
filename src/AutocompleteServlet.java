@@ -13,6 +13,10 @@ import java.io.PrintWriter;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.util.List;
+import java.util.ArrayList;
+
+import query.SearchSubQuery;
 
 @WebServlet(name = "AutocompleteServlet", urlPatterns = "/api/autocomplete")
 public class AutocompleteServlet extends HttpServlet {
@@ -31,31 +35,35 @@ public class AutocompleteServlet extends HttpServlet {
         response.setCharacterEncoding("UTF-8");
         response.setContentType("application/json");
 
+        PrintWriter out = response.getWriter();
+        JsonArray suggestions = new JsonArray();
+
+        List<String> subQueries = new ArrayList<>();
+        List<String> subParams = new ArrayList<>();
+
         String query = request.getParameter("query");
+        if (query != null) {
+            query = query.trim().replaceAll("\\s+", " ");
+        }
 
         // Only proceed if the query length is 3 or more characters
-        if (query == null || query.trim().length() < 3) {
+        if (query == null || query.length() < 3) {
             response.getWriter().write("[]");
             return;
         }
 
-        // Tokenize and prepare the full-text search query
-        String[] tokens = query.trim().split("\\s+");
-        StringBuilder fullTextSearch = new StringBuilder();
-        for (String token : tokens) {
-            fullTextSearch.append("+").append(token).append("* ");
-        }
-        String searchQuery = fullTextSearch.toString().trim();
-
-        PrintWriter out = response.getWriter();
-        JsonArray suggestions = new JsonArray();
+        // Prepare the full-text search query
+        SearchSubQuery.extendFulltext("movies_t", "movies", "title",
+                query, subQueries, subParams);
 
         // Execute the full-text search query
         try (Connection conn = dataSource.getConnection()) {
-            String sql = "SELECT id, title FROM movies WHERE MATCH(title) AGAINST (? IN BOOLEAN MODE) LIMIT 10";
+            String sql = "WITH " + subQueries.get(0)
+                    + " SELECT id, title FROM movies_t LIMIT 10";
             try (PreparedStatement statement = conn.prepareStatement(sql)) {
-                statement.setString(1, searchQuery);
-
+                for (int i = 0; i < subParams.size(); i++) {
+                    statement.setString(i + 1, subParams.get(i));
+                }
                 try (ResultSet rs = statement.executeQuery()) {
                     while (rs.next()) {
                         JsonObject suggestion = new JsonObject();
