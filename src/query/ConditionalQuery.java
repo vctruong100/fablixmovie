@@ -5,7 +5,6 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.ArrayList;
-import java.io.File;
 
 /*
  * Collects rows based on
@@ -21,11 +20,12 @@ abstract class ConditionalQuery extends BaseQuery {
     }
 
     protected final StringBuilder builder;
+    protected final List<String> subQueries;
     protected final List<String> selectClauses;
     protected final List<String> joinClauses;
     protected final List<String> whereClauses;
     protected final List<String> params;
-    protected final boolean fuzzySearch;
+    protected final List<String> subParams;
 
     protected String[] order;
     protected boolean pleaseUpdate;
@@ -35,11 +35,12 @@ abstract class ConditionalQuery extends BaseQuery {
 
     public ConditionalQuery() {
         builder = new StringBuilder();
+        subQueries = new ArrayList<>();
         selectClauses = new ArrayList<>();
         joinClauses = new ArrayList<>();
         whereClauses = new ArrayList<>();
         params = new ArrayList<>();
-        fuzzySearch = new File("edth.sql").isFile();
+        subParams = new ArrayList<>();
         limit = 10;
         offset = 0;
         order = null;
@@ -71,20 +72,28 @@ abstract class ConditionalQuery extends BaseQuery {
 
         String queryString;
         PreparedStatement statement;
+        int numParams = params.size();
+        int numSubParams = subParams.size();
 
         builder.setLength(0);
 
         /* base statement */
+        buildSubQueries();
         buildSelectCount();
         buildJoinClauses();
         buildWhereClauses();
 
         queryString = builder.toString();
         statement = conn.prepareStatement(queryString);
-        for (int i = 0; i < params.size(); i++) {
-            statement.setString(i + 1, params.get(i));
+        for (int i = 0; i < numSubParams; i++) {
+            statement.setString(i + 1, subParams.get(i));
         }
-        System.out.println("ConditionalQuery::countStatement --> " + statement);
+        for (int i = 0; i < numParams; i++) {
+            statement.setString(numSubParams + i + 1, params.get(i));
+        }
+        System.out.println("ConditionalQuery::countStatement "
+                + "(fuzzy=" + SearchSubQuery.FUZZY_SEARCH
+                + ") --> " + statement);
         return statement;
     }
     /*
@@ -103,10 +112,13 @@ abstract class ConditionalQuery extends BaseQuery {
 
         String queryString;
         PreparedStatement statement;
+        int numParams = params.size();
+        int numSubParams = subParams.size();
 
         builder.setLength(0);
 
         /* base statement */
+        buildSubQueries();
         buildSelectClauses();
         buildJoinClauses();
         buildWhereClauses();
@@ -117,10 +129,15 @@ abstract class ConditionalQuery extends BaseQuery {
 
         queryString = builder.toString();
         statement = conn.prepareStatement(queryString);
-        for (int i = 0; i < params.size(); i++) {
-            statement.setString(i + 1, params.get(i));
+        for (int i = 0; i < numSubParams; i++) {
+            statement.setString(i + 1, subParams.get(i));
         }
-        System.out.println("ConditionalQuery::statement --> " + statement);
+        for (int i = 0; i < numParams; i++) {
+            statement.setString(numSubParams + i + 1, params.get(i));
+        }
+        System.out.println("ConditionalQuery::statement "
+                + "(fuzzy=" + SearchSubQuery.FUZZY_SEARCH
+                + ") --> " + statement);
         return statement;
     }
 
@@ -132,6 +149,19 @@ abstract class ConditionalQuery extends BaseQuery {
     public final void setOffset(int offset) {
         this.offset = offset;
         pleaseUpdate = true;
+    }
+
+    /*
+     * This shall be called before any query builds
+     * (the absolute first thing called)
+     */
+    private void buildSubQueries() {
+        builder.append("WITH ");
+        for (String subQuery : subQueries) {
+            builder.append(subQuery);
+            builder.append(",");
+        }
+        builder.deleteCharAt(builder.length() - 1);
     }
 
     /*
