@@ -40,7 +40,7 @@ Project 4:
   show master status;
   
   # slave
-  CHANGE MASTER TO MASTER_HOST={MASTER_PRIVATE_IP}, MASTER_USER='repl', MASTER_PASSWORD='slave66{ass$word',
+  CHANGE MASTER TO MASTER_HOST={MASTER_PRIVATE_IP}, MASTER_USER='repl', MASTER_PASSWORD='slave66Pass$word',
   MASTER_LOG_FILE={FILE}, MASTER_LOG_POS={POSITION};
   
   start slave;
@@ -63,10 +63,21 @@ Project 4:
     with a maximum of 100 connections, 30 idle connections and a 10-second wait time
   - Servlets use DataSource to fetch connections:
   ```java
+  // If servlet does not write at all, it uses the following:
+  // Pulls from either master or slave instance (reads)
   dataSource = (DataSource) new InitialContext().lookup("java:comp/env/jdbc/moviedb");
   try (Connection conn = dataSource.getConnection()) {
-  PreparedStatement ps = conn.prepareStatement(query);
-  ResultSet rs = ps.executeQuery();
+    PreparedStatement ps = conn.prepareStatement(query);
+    ResultSet rs = ps.executeQuery();
+  }
+  
+  // If servlet writes, then it uses another data source configured for writes only:
+  // Pulls from master instance (writes)
+  // Note: PaymentServlet and DashboardServlet are the only write servlets
+  dataSource = (DataSource) new InitialContext().lookup("java:comp/env/jdbc/moviedb-write");
+  try (Connection conn = dataSource.getConnection()) {
+    PreparedStatement ps = conn.prepareStatement(query);
+    ResultSet rs = ps.executeQuery();
   }
   ```
 - ## Connection Pooling with 2 Backend SQL:

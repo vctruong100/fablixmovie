@@ -20,6 +20,13 @@ public class DashboardServlet extends HttpServlet {
     public void init(ServletConfig config) {
         try {
             dataSource = (DataSource) new InitialContext().lookup("java:comp/env/jdbc/moviedb");
+            if (System.getenv("FAB-DEV") == null) {
+                System.out.println("DashboardServlet: using moviedb-write in prod mode");
+                dataSource = (DataSource) new InitialContext()
+                        .lookup("java:comp/env/jdbc/moviedb-write");
+            } else {
+                System.out.println("DashboardServlet: using moviedb-write in dev mode");
+            }
         } catch (NamingException e) {
             e.printStackTrace();
         }
