@@ -1,5 +1,16 @@
 ## Extra Credit: Fuzzy Search
 - Implemented a fuzzy search feature using the Levenshtein distance algorithm.
+- We use the edth UDF toolkit, which is installed using `edth.sh`
+### Fuzzy Search Design
+- Fuzzy search is implemented as a subquery (alongside fulltext search) in `src/query/SearchSubQuery.java`
+- We use subqueries to efficiently join/match movie IDs
+- Subquery supports both fulltext (title) and LIKE operations (star, director)
+- We do not support fuzzy searching for year (exact matching) because year is only 4 characters
+- We select the edit distance threshold to be the floor of query length divided by 2.5
+  - This ensures that sufficiently long queries can be correctly found via fuzzy searching
+  - This also reduces irrelevant results for short queries too
+- Design of the fulltext fuzzy search subquery: `WITH ... AS (SELECT * FROM ... WHERE MATCH(...) AGAINST (? IN BOOLEAN MODE) OR edth(..., query, threshold) ...`
+- Design of the LIKE fuzzy search subquery: `WITH ... AS (SELECT * FROM ... WHERE LOWER(...) LIKE '%query%' OR edth(..., query, threshold) ...`
 
 ## Demo
 Project 1: https://www.youtube.com/watch?v=gUnYy8DNaRM
