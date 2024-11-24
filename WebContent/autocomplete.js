@@ -42,6 +42,12 @@ function displaySuggestions(suggestions) {
     dropdown.empty().hide();
     if (suggestions.length > 0) {
         currentIndex = -1;
+
+        dropdown.off("mouseleave").on("mouseleave", function () {
+            $(".highlight").removeClass("highlight");
+            currentIndex = -1;
+        });
+
         suggestions.slice(0, 10).forEach((suggestion, index) => {
             console.log(suggestion);
             const suggestionDiv = $("<div>")

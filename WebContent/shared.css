@@ -147,16 +147,15 @@ li a:hover {
     align-items: center;
     background-color: #ffffff;
     padding: 10px 20px;
-    margin-bottom: 20px;
     border-bottom: 2px solid #4a90e2;
-    position: relative;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .navbar-links a {
     color: #4a90e2;
     text-decoration: none;
     margin: 0 15px;
-    font-size: 16px;
+    font-size: 14px;
     text-transform: uppercase;
     font-weight: bold;
 }
@@ -169,29 +168,39 @@ li a:hover {
     display: flex;
     align-items: center;
     gap: 10px;
-    position: relative;
+    flex-wrap: nowrap;
 }
 
 .navbar-search input[type="text"],
 .navbar-search input[type="number"] {
-    padding: 8px 12px;
-    border: 1px solid #cfd4d9;
-    border-radius: 5px;
+    padding: 6px 12px;
+    border: 1px solid #dcdfe6;
+    border-radius: 20px;
     background-color: #f9fafc;
-    color: #2e3a4e;
+    color: #333333;
     font-size: 14px;
+    outline: none;
+    transition: border 0.3s, box-shadow 0.3s;
+    width: 150px;
+}
+
+.navbar-search input[type="text"]:focus,
+.navbar-search input[type="number"]:focus {
+    border: 1px solid #4a90e2;
+    box-shadow: 0 0 4px rgba(74, 144, 226, 0.5);
 }
 
 .navbar-search button {
-    padding: 8px 20px;
+    padding: 6px 15px;
     background-color: #4a90e2;
-    color: white;
-    border-radius: 5px;
+    color: #ffffff;
     border: none;
+    border-radius: 20px;
     cursor: pointer;
     font-size: 14px;
-    text-transform: uppercase;
     font-weight: bold;
+    text-transform: uppercase;
+    transition: background-color 0.3s;
 }
 
 .navbar-search button:hover {
