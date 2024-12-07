@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: fabflix-container # Names the container within the pod as "fabflix-container".
-          image: vctruong100/moviedb-aws:v1 # Uses the Docker image "https://hub.docker.com/r/vctruong100/moviedb-aws" for the container.
+          image: vctruong100/moviedb-aws:v2 # Uses the Docker image "https://hub.docker.com/r/vctruong100/moviedb-aws" for the container.
           ports:
             - name: http
               containerPort: 8080 # Exposes port 8080 of the container.
