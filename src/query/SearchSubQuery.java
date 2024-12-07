@@ -9,7 +9,7 @@ import java.util.List;
 public class SearchSubQuery {
     // disable if edth is not installed
     // see: edth.sh
-    public static final boolean FUZZY_SEARCH = true;
+    public static final boolean FUZZY_SEARCH = false;
 
     public static void extendFulltext(
             String subQueryName,
