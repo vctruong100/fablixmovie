@@ -1,46 +1,48 @@
-## Demo
-Project 1: https://www.youtube.com/watch?v=gUnYy8DNaRM
+# Introduction
+Fabflix is a web application designed to provide a seamless browsing experience for movie enthusiasts. It includes functionalities for searching, browsing, and managing movie-related data. This project is built with scalability, performance, and security in mind.
 
-Project 2: https://www.youtube.com/watch?v=kSFtYlGfwkM
+## Features
 
-Project 3: https://www.youtube.com/watch?v=IttZBBCscT4
+### Basic Setup and Deployment
+- Hosted on AWS using MySQL, JDBC, and Tomcat.
+- Initial deployment of Fabflix.
 
-Project 4: https://www.youtube.com/watch?v=EvFg85EX3F8
+### Feature Enhancements
+- Improved user experience and functionality within the Fabflix platform.
 
-Project 5: https://www.youtube.com/watch?v=O6n0-ZlaY3M
+### Security and Data Management
+- reCAPTCHA integration.
+- HTTPS support for secure data transfer.
+- Usage of PreparedStatements and Stored Procedures to prevent SQL injection.
+- XML parsing for data processing.
 
-# General
-## Team5 Contributions
-### Vinh
-- Added Docker file, built Docker Image, and pushed image to Docker Hub
-- Set up Kubernetes cluster config with master/slave database on AWS
-- Deployed Fabflix to Kubernetes cluster
-- Created demo video for Project 5
+### Search Capabilities
+- Full-text search for improved movie lookup.
+- Auto-complete functionality for real-time search suggestions.
+- Fuzzy search for enhanced query flexibility.
 
-### Jason
-- Setup YAML files for Kubernetes deployment
-- Developed the JMX test plan file for JMeter
-- Helped run the JMeter tests
-- Assisted in resolving issues during Kubernetes deployment
+### Scalable Infrastructure
+- Web infrastructure scaling using Docker and Kubernetes.
+- Performance testing and optimization with JMeter.
 
-## Kubernetes Cluster JMeter Test Results (1 minute)
-### 1 Control Plane + 3 Worker nodes + 1 master MySQL pod + 1 slave MySQL pod + 2 Fabflix pods
-- Samples: 10495
-- Throughput: 10274.61/min
-### 1 Control Plane + 4 Worker nodes + 1 master MySQL pod + 1 slave MySQL pod + 3 Fabflix pods
-- Samples: 9887
-- Throughput: 9514.46/min
+## Technologies Used
+- **Backend**: MySQL, JDBC, Tomcat
+- **Frontend**: HTML, CSS, JavaScript
+- **Cloud**: AWS (Amazon Web Services)
+- **Containers**: Docker, Kubernetes
+- **Performance Testing**: JMeter
+- **Security**: reCAPTCHA, HTTPS
+- **Data Handling**: PreparedStatement, Stored Procedures, XML Parsing
+
+## Setup and Deployment
+Branch **main** is the up-to-date version of **p5** branch. 
+For a full breakdown of the deployment process, please refer to the `DEPLOYMENT.md` file in this repository. This guide includes:
+- Prerequisite installations and configurations.
+- Detailed Docker and Kubernetes setup instructions.
 
 ## Requirements
 - Java 11.0.24
 - Tomcat 10
 - MySQL 8.0
 - Maven
-
-## Before running
-- Setup MySQL by creating a user `mytestuser` with privileges:
-```mysql
-CREATE USER 'mytestuser'@'localhost' IDENTIFIED BY 'My6$Password';
-GRANT ALL PRIVILEGES ON *.* TO 'mytestuser'@'localhost';
-```
 
